@@ -241,14 +241,14 @@ const duelLink=location.href;
 function duelStatus(msg,share=false){duelBanner.innerHTML='<div>'+msg+'</div>'+(share?'<button id="duelCopy">复制邀请链接</button>':'');if(share)document.getElementById('duelCopy').onclick=()=>{navigator.clipboard.writeText(duelLink).then(()=>duelStatus('链接已复制，发给朋友即可',true)).catch(()=>prompt('复制链接',duelLink))}}
 function duelSendPosition(force){if(!duelStarted||!duelSocket||duelSocket.readyState!==1)return;const t=performance.now();if(!force&&t-duelLastSent<100)return;duelLastSent=t;duelSocket.send(JSON.stringify({type:'move',dist:player.dist}))}
 function duelConnect(){
-const backend='__WORKER_URL__';
+const backend='https://game1.zhangcj040221.workers.dev';
 if(backend.includes('__WORKER')){duelStatus('联机服务器正在部署，请稍后再试');return}
 duelSocket=new WebSocket(backend.replace(/^http/,'ws')+'/room?room='+duelRoom);
 duelSocket.onopen=()=>duelStatus('房间 '+duelRoom+' · 等待好友加入…',true);
 duelSocket.onmessage=e=>{const m=JSON.parse(e.data);
 if(m.type==='welcome')duelStatus('房间 '+duelRoom+' · 已加入，等待对手',true);
-if(m.type==='lobby')duelStatus(m.count===2?'双方到齐！点击「开始比赛」一起起跑':'房间 '+duelRoom+' · 等待第二位玩家',true);
-if(m.type==='start'){duelStarted=true;reset();game.state='countdown';game.remaining=Math.max(.1,(m.at-Date.now())/1000-.55);$('introOverlay').style.display='none';$('countdown').style.display='flex';$('countdown').textContent='3';duelStatus('比赛即将开始！');setTimeout(()=>duelBanner.style.display='none',4000)}
+if(m.type==='lobby'){duelStatus(m.count===2?'双方到齐！点击下方「开始比赛」':'房间 '+duelRoom+' · 等待第二位玩家',true);if(m.count===2){duelBanner.innerHTML+='<button id="duelStart">开始比赛</button>';document.getElementById('duelStart').onclick=()=>duelSocket.send(JSON.stringify({type:'start'}));}}
+if(m.type==='start'){reset();duelStarted=true;game.state='countdown';game.remaining=Math.max(.1,(m.at-Date.now())/1000-.55);$('introOverlay').style.display='none';$('countdown').style.display='flex';$('countdown').textContent='3';duelStatus('比赛即将开始！');setTimeout(()=>duelBanner.style.display='none',4000)}
 if(m.type==='move'&&m.seat!==duelSeat){rival.dist=m.dist;rival.vel=8;if(m.dist>=100)rival.finish=game.elapsed}
 if(m.type==='finish'&&m.results.length===2){duelStatus(m.results[0].seat===duelSeat?'🏆 你赢了！':'对手获胜！');duelBanner.style.display='block'}
 if(m.type==='reset'){duelStarted=false;reset();duelBanner.style.display='block';duelStatus('对手离开或重新开始，等待双方就绪',true)}
