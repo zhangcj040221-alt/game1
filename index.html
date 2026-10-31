@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#131f37" />
+<title>STRIDE 100 — 3D百米赛跑</title>
+<style>
+:root{--ink:#15263e;--white:#fff;--lime:#dcff63;--orange:#ff724c;--quiet:#a3b5c4;--blue:#1884bc}
+*{box-sizing:border-box} html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#14213a;color:white;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+button{font:inherit;cursor:pointer} button:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
+#app{position:relative;width:100%;height:100%;height:100dvh;overflow:hidden;background:linear-gradient(#75c8e9,#d3ebeb 55%,#75bb77)}
+#world{position:absolute;inset:0} #world canvas{display:block;width:100%;height:100%}
+#grain{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(10,20,32,.18),transparent 32%,transparent 57%,rgba(10,25,36,.16));z-index:1}
+#ui{position:absolute;inset:0;pointer-events:none;z-index:3}
+#ui>*{pointer-events:auto}
+.top{position:absolute;top:0;left:0;right:0;display:grid;grid-template-columns:1fr minmax(260px,420px) 1fr;align-items:start;gap:18px;padding:clamp(16px,3vw,32px);background:linear-gradient(180deg,rgba(13,24,43,.48),rgba(13,24,43,0));pointer-events:none!important}
+.brand{display:flex;align-items:flex-start;gap:10px;width:max-content}
+.brandmark{width:32px;height:32px;background:var(--lime);color:#122039;border-radius:9px;display:grid;place-items:center;font-weight:1000;font-style:italic;transform:skew(-9deg);box-shadow:3px 4px 0 #17344c}
+.brandtitle{font-size:clamp(19px,2.7vw,30px);font-weight:1000;line-height:1;letter-spacing:-1.2px;font-style:italic}.brandtitle b{color:var(--lime)}
+.brandsub{font-size:9px;letter-spacing:2.5px;font-weight:800;margin-top:5px;color:#e8f6fa}
+.progress-wrap{align-self:start;padding-top:5px}
+.progress-labels{display:flex;justify-content:space-between;font-size:10px;font-weight:900;letter-spacing:1.6px;margin-bottom:9px;color:#f4fbfa}
+.progress-track{height:10px;border-radius:50px;border:2px solid rgba(255,255,255,.7);background:rgba(19,38,55,.4);position:relative;overflow:visible}
+.progress-fill{height:100%;width:0%;border-radius:50px;background:var(--lime);box-shadow:0 0 12px rgba(220,255,99,.4)}
+.progress-knob{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--lime);border:4px solid #14233a;top:-6px;left:0%;transform:translateX(-50%);box-shadow:0 2px 8px #16283b66}
+.stats{justify-self:end;display:flex;align-items:center;gap:16px}
+.stat{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.stat small{font-size:9px;font-weight:900;letter-spacing:1.4px;color:#e2eef5}.stat strong{font-size:clamp(18px,2.5vw,26px);font-style:italic;font-weight:1000;letter-spacing:-.5px;line-height:1}
+.stat strong em{font-size:11px;color:#e5eced;font-style:normal;margin-left:3px}.stats .rank{color:var(--lime)}
+#mute{pointer-events:auto;width:34px;height:34px;border-radius:10px;background:#13243caa;color:white;border:1px solid #ffffff55;font-size:16px}
+#leader{position:absolute;top:108px;right:clamp(16px,3vw,32px);width:178px;padding:16px 15px 12px;border:1px solid rgba(255,255,255,.35);border-radius:17px;background:rgba(16,39,57,.70);box-shadow:0 12px 50px #15345144;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.panel-label{font-size:10px;letter-spacing:1.8px;font-weight:900;color:#d4e6eb;display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.player-row{height:31px;display:flex;gap:8px;align-items:center;font-size:11px;font-weight:800;color:#e3f0f3}
+.player-row .pos{width:13px;color:#bbcfdb;font-weight:900;font-size:12px}.player-row .dot{width:9px;height:9px;border-radius:100%}.player-row .name{flex:1}.player-row .meters{font-variant-numeric:tabular-nums;color:#dae5e8}.player-row.me{color:var(--lime)}
+#bottom{position:absolute;bottom:0;left:0;right:0;padding:0 clamp(16px,3vw,32px) max(24px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;justify-content:space-between;gap:20px;background:linear-gradient(0deg,rgba(11,28,40,.65),transparent);pointer-events:none!important}
+.tips{max-width:215px;padding-bottom:8px}
+.tips .eyebrow{font-size:10px;font-weight:900;letter-spacing:2px;color:var(--lime);margin-bottom:6px}
+.tips p{margin:0;font-size:12px;line-height:1.55;color:#f0fafb;font-weight:700}
+#combo{margin-top:10px;display:flex;align-items:center;gap:9px;min-height:25px;font-size:12px;font-weight:900;color:var(--lime)}
+#combo b{font-weight:1000;font-size:22px;font-style:italic}
+.controls{display:flex;align-items:flex-end;gap:10px;pointer-events:auto!important}
+.foot{width:clamp(106px,13vw,158px);height:clamp(89px,10vw,108px);border:1px solid rgba(255,255,255,.5);border-radius:19px;background:linear-gradient(145deg,#f9fffe,#d9eff2);color:#152b3d;box-shadow:0 7px 0 #80999e,0 11px 34px #192c3e66;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;touch-action:manipulation;transition:transform .07s,box-shadow .07s}
+.foot span{font-size:12px;letter-spacing:2px;font-weight:900}.foot strong{font-weight:1000;font-size:29px;font-style:italic;line-height:1}.foot.left{transform:skew(-4deg)}.foot.right{transform:skew(4deg)}
+.foot.pressed,.foot:active{background:var(--lime);box-shadow:0 2px 0 #8c9955,0 5px 15px #192c3e44;translate:0 5px}
+.foot small{color:#536678;font-size:9px;font-weight:900;letter-spacing:1px}
+#speedbar{margin-bottom:5px;min-width:160px;padding:13px 15px;border:1px solid rgba(255,255,255,.35);border-radius:14px;background:rgba(14,35,51,.68);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.speedtext{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-weight:900;font-size:10px;letter-spacing:1.4px;color:#e0f3f0}.speedtext span{font-size:24px;font-weight:1000;letter-spacing:-1px;color:var(--lime);font-style:italic}.speedtext span small{font-size:9px;font-style:normal;letter-spacing:0}
+.bar{margin-top:7px;width:100%;height:6px;background:#ffffff44;border-radius:8px;overflow:hidden}.bar>div{height:100%;width:0%;border-radius:8px;background:var(--lime);transition:width .1s}
+#stamina{margin-top:11px}.stamina-label{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:#e5f3f6}.bar.energy>div{background:var(--orange);width:100%}
+#toast{position:absolute;left:50%;top:39%;transform:translateX(-50%);text-align:center;min-height:44px;font-style:italic;font-size:clamp(22px,4vw,46px);font-weight:1000;letter-spacing:-1px;color:var(--lime);text-shadow:0 4px 0 #263649,0 8px 20px #17263faa;pointer-events:none;opacity:0;transition:opacity .15s}
+#countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;font-size:clamp(116px,23vw,260px);font-weight:1000;font-style:italic;letter-spacing:-14px;text-shadow:9px 13px 0 #1d3349;color:var(--lime)}
+.overlay{position:absolute;inset:0;z-index:10;background:rgba(14,29,46,.42);display:grid;place-items:center;padding:22px;pointer-events:auto;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);transition:opacity .3s}
+.modal{width:min(100%,490px);background:#f8fbf1;color:#172d3b;border:2px solid #ffffff;border-radius:27px;box-shadow:10px 14px 0 #172d3b44,0 24px 70px #071d3766;overflow-y:auto;max-height:calc(100dvh - 24px);scrollbar-width:none;position:relative}
+.modal:before{content:"";position:absolute;height:7px;left:0;top:0;right:0;background:repeating-linear-gradient(90deg,#ff7559 0 36px,#172d3b 36px 47px,#dcff63 47px 83px,#172d3b 83px 94px)}
+.modal-main{padding:32px clamp(22px,6vw,39px) 29px}
+.kicker{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:2.6px;font-weight:1000;color:#547381}.kicker i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--orange);transform:rotate(45deg)}
+.modal h1{font-style:italic;font-size:clamp(54px,11vw,79px);font-weight:1000;letter-spacing:-5px;line-height:.92;margin:24px 0 6px}.modal h1 span{color:#fe7055}.modal h2{font-size:17px;font-weight:1000;margin:0 0 18px;letter-spacing:3px}.lead{color:#4c6875;font-size:13px;line-height:1.9;margin:0 0 22px;font-weight:650}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 22px}.info>div{border:1px solid #d6e0e1;border-radius:12px;padding:12px;background:#edf4f1}.info b{display:block;font-size:11px;font-weight:1000;margin-bottom:5px}.info small{font-size:11px;color:#55707a;line-height:1.45;display:block}
+.primary{border:0;background:var(--lime);border-radius:13px;color:#172d3b;width:100%;padding:16px 18px;box-shadow:0 5px 0 #9cbd37;transform:translateY(-2px);font-size:17px;font-weight:1000;font-style:italic;letter-spacing:1px;transition:transform .09s,box-shadow .09s}.primary:active{transform:translateY(3px);box-shadow:0 0 0 #9cbd37}
+.modal-foot{border-top:1px solid #d9e2df;display:flex;justify-content:space-between;gap:14px;padding:12px 33px;background:#eaf1ed;font-size:10px;color:#6f8489;font-weight:800;letter-spacing:1px}
+#resultOverlay{display:none}.result-big{font-size:72px;font-weight:1000;font-style:italic;letter-spacing:-6px;margin:17px 0 4px;line-height:1;color:#ff7559}.result-best{font-size:11px;color:#52727d;font-weight:800}.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:19px 0 24px}.result-grid>div{padding:13px 15px;border:1px solid #d3e1da;background:#ecf3f0;border-radius:13px}.result-grid small{font-size:10px;letter-spacing:1px;color:#617b87;font-weight:900}.result-grid strong{display:block;margin-top:5px;font-size:25px;font-weight:1000;font-style:italic}
+#networkError{display:none;position:absolute;inset:0;background:#11243b;color:white;z-index:20;align-items:center;justify-content:center;text-align:center;padding:24px;font-weight:700;line-height:2}
+@media(max-width:850px){.top{grid-template-columns:1fr 1fr;gap:8px}.progress-wrap{grid-column:1 / 3;grid-row:2;padding:0 3px}.stats{grid-column:2;grid-row:1}.brand{grid-column:1;grid-row:1}.top{padding:16px}.stats{gap:11px}.stat strong{font-size:19px}.stat small{font-size:8px}.brandtitle{font-size:22px}.brandsub{font-size:8px;letter-spacing:1.5px}#leader{top:118px;right:13px;width:148px;padding:12px}.player-row{font-size:10px;height:28px}.panel-label{font-size:9px}.tips{max-width:140px}.tips p{font-size:11px}#bottom{padding:0 12px max(20px,env(safe-area-inset-bottom));gap:8px}#speedbar{min-width:126px;width:133px;padding:10px}.foot{width:93px;height:86px;border-radius:15px}.foot strong{font-size:26px}.foot span{font-size:10px}.controls{gap:7px}}
+@media(max-width:620px){#leader{display:none}.top{grid-template-columns:1fr 1fr;padding:15px}.stat:first-child{display:none}.brandmark{width:28px;height:28px}.brandtitle{font-size:21px}.stats .rank{font-size:21px}#bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}.tips{grid-column:1;grid-row:1;max-width:unset}.tips p{display:none}#combo{margin:0}.controls{grid-column:1 / 3;grid-row:2;display:flex;justify-content:center;gap:15px}.foot{width:min(41vw,190px);height:min(21vh,120px)}#speedbar{grid-column:2;grid-row:1;min-width:0;width:100%;margin:0}.speedtext span{font-size:21px}#bottom{padding-bottom:max(17px,env(safe-area-inset-bottom))}#toast{top:36%}.progress-wrap{padding-top:7px}}
+@media(max-height:620px) and (orientation:landscape){#leader{display:none}.top{padding:10px 22px}.progress-wrap{padding-top:0}#bottom{padding:0 18px 12px}.foot{width:105px;height:72px}.speedtext span{font-size:18px}#speedbar{padding:8px}.tips p{display:none}.modal-main{padding:18px 27px}.modal h1{font-size:56px;margin:12px 0}.info{margin-bottom:12px}.lead{margin-bottom:10px}}
+@media(prefers-reduced-motion:reduce){.foot,.overlay,.bar>div{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="world"></div><div id="grain"></div>
+ <div id="ui">
+  <header class="top">
+   <div class="brand"><div class="brandmark">↗</div><div><div class="brandtitle">STRIDE <b>100</b></div><div class="brandsub">SPRINT CLUB · 3D DASH</div></div></div>
+   <div class="progress-wrap"><div class="progress-labels"><span>START · 0M</span><span id="distanceLabel">0 / 100 M</span><span>FINISH · 100M</span></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div><div class="progress-knob" id="progressKnob"></div></div></div>
+   <div class="stats"><div class="stat"><small>比赛时间</small><strong id="time">00:00<em>.00</em></strong></div><div class="stat"><small>当前名次</small><strong class="rank" id="rank">-- <em>/ 6</em></strong></div><button id="mute" title="切换声音" aria-label="切换声音">♫</button></div>
+  </header>
+  <aside id="leader"><div class="panel-label"><span>LIVE STANDINGS</span><span>●</span></div><div id="rankingRows"></div></aside>
+  <div id="countdown">3</div><div id="toast"></div>
+  <div id="bottom">
+   <div class="tips"><div class="eyebrow">KEEP YOUR RHYTHM / 保持节奏</div><p>左右脚交替冲刺！间隔适中的连续踩踏可以跑得更快。</p><div id="combo">连击 <b id="comboNum">0</b><span id="comboText">等待起跑</span></div></div>
+   <div id="speedbar"><div class="speedtext"><label>实时速度</label><span><b id="speed">0.0</b><small> m/s</small></span></div><div class="bar"><div id="speedFill"></div></div><div id="stamina"><div class="stamina-label"><span>体力 ENERGY</span><span id="energyText">100%</span></div><div class="bar energy"><div id="energyFill"></div></div></div></div>
+   <div class="controls"><button id="leftFoot" class="foot left" type="button" aria-label="左脚 A"><span>LEFT FOOT</span><strong>左脚</strong><small>A / ←</small></button><button id="rightFoot" class="foot right" type="button" aria-label="右脚 D"><span>RIGHT FOOT</span><strong>右脚</strong><small>D / →</small></button></div>
+  </div>
+ </div>
+ <div class="overlay" id="introOverlay">
+  <div class="modal"><div class="modal-main"><div class="kicker"><i></i> THE BIG 100M CHALLENGE</div><h1>READY<br><span>TO RUN?</span></h1><h2>3D 百米冲刺挑战</h2><p class="lead">站上六人赛道，用你的双手跑出最快的 100 米！连续交替迈步、控制体力，冲过终点拿下第一名。</p><div class="info"><div><b>⌨ 电脑玩法</b><small>交替按 A / D 或 ← / →</small></div><div><b>☝ 手机玩法</b><small>交替点击左脚、右脚按钮</small></div></div><button class="primary" id="startBtn">开始比赛 ↗</button></div><div class="modal-foot"><span>6 RUNNERS · 100 METERS</span><span>NO DOWNLOADS · WEBGL</span></div></div>
+ </div>
+ <div class="overlay" id="resultOverlay"><div class="modal"><div class="modal-main"><div class="kicker"><i></i> RACE COMPLETE</div><div id="resultBig" class="result-big">#1</div><h2 id="resultTitle">终点冲线！</h2><div class="result-best" id="bestLabel">个人最好成绩</div><div class="result-grid"><div><small>完赛用时</small><strong id="resultTime">00.00s</strong></div><div><small>最高连击</small><strong id="resultCombo">0</strong></div></div><button class="primary" id="againBtn">再跑一次 ↗</button></div><div class="modal-foot"><span>STRIDE 100 / SPRINTER'S CLUB</span><span>KEEP RUNNING</span></div></div></div>
+ <div id="networkError"><div><div style="font-size:34px">⚠ 无法加载 3D 引擎</div><div>请检查网络连接后刷新页面。<br>此游戏首次打开需要从 jsDelivr 获取 Three.js。</div></div></div>
+</div>
+<script type="module">
+let THREE;
+try { THREE = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js'); }
+catch (err) { document.getElementById('networkError').style.display='flex'; console.error('Three.js 加载失败',err); }
+if (THREE) {
+const $=id=>document.getElementById(id);
+const START_Z=8, DISTANCE=100, FINISH_Z=START_Z-DISTANCE, LANE_X=[-5,-3,-1,1,3,5];
+const RUNNERS=[
+ {name:'闪电',color:0xf7c14d,speed:8.84},
+ {name:'疾风',color:0x60d6d4,speed:8.53},
+ {name:'你',color:0xff654c,speed:0,me:true},
+ {name:'流星',color:0x9382e8,speed:9.08},
+ {name:'火花',color:0x72bf86,speed:8.77},
+ {name:'飞鱼',color:0x5a9bed,speed:8.66}
+];
+const game={state:'ready',elapsed:0,remaining:3.15,playerSpeed:0,energy:100,combo:0,maxCombo:0,lastFoot:null,lastStep:-100,progress:0,rank:3,sound:true,toastTTL:0,toastMessage:'',seed:0};
+let audioCtx=null;
+function tone(freq=530,duration=.095,type='sine',volume=.055){if(!game.sound) return;try{if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);g.gain.setValueAtTime(volume,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration+.01)}catch(e){}}
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x91d3e8);scene.fog=new THREE.Fog(0x91d3e8,60,180);
+const camera=new THREE.PerspectiveCamera(56,1,.1,240);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',alpha:false});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.innerWidth<700?1.5:1.85));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
+$('world').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xf5fff9,0x78938b,2));const sun=new THREE.DirectionalLight(0xfff4cf,2.6);sun.position.set(-25,48,24);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-22;sun.shadow.camera.right=22;sun.shadow.camera.top=32;sun.shadow.camera.bottom=-32;sun.shadow.camera.near=1;sun.shadow.camera.far=130;sun.shadow.bias=-.0002;scene.add(sun);scene.add(sun.target);
+const mat=(color,roughness=.88,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const mats={ground:mat(0x77ae7a),track:mat(0xdc7864),trackEdge:mat(0xefad8d),white:mat(0xfaf7e3),gray:mat(0x647982),dark:mat(0x273f54),lime:mat(0xe2ff7c),skin:mat(0xe9aa80),stands:mat(0x718c96),tree:mat(0x478e77),trunk:mat(0x967a5f)};
+function mesh(geo,m,x=0,y=0,z=0,cast=false,receive=false){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=receive;scene.add(o);return o}
+mesh(new THREE.PlaneGeometry(350,350),mats.ground,0,-.085,-47,false,true).rotation.x=-Math.PI/2;
+mesh(new THREE.PlaneGeometry(16.7,133),mats.trackEdge,0,-.012,-46,false,true).rotation.x=-Math.PI/2;
+mesh(new THREE.PlaneGeometry(12.35,133),mats.track,0,.012,-46,false,true).rotation.x=-Math.PI/2;
+for(let i=0;i<=6;i++)mesh(new THREE.BoxGeometry(.065,.02,131),mats.white,-6+i*2,.043,-46,false,false);
+for(let z=3;z>-95;z-=10){mesh(new THREE.BoxGeometry(.14,.028,.09),mats.white,-6.45,.052,z);mesh(new THREE.BoxGeometry(.14,.028,.09),mats.white,6.45,.052,z)}
+mesh(new THREE.BoxGeometry(12.15,.025,.16),mats.white,0,.058,START_Z+1.5);
+for(let i=0;i<19;i++){for(let j=0;j<2;j++)mesh(new THREE.BoxGeometry(12.1/19,.035,.48),((i+j)%2===0?mats.white:mats.dark),-5.735+i*(12.1/19),.079,FINISH_Z+j*.48)}
+for(let s of [-1,1]){mesh(new THREE.BoxGeometry(.16,.13,131),mats.white,s*6.34,.05,-46)}
+// 里程牌与终点架
+function boardTexture(text,sub,bg='#203c4d',fg='#e2ff7c'){
+ const c=document.createElement('canvas');c.width=512;c.height=192;const ctx=c.getContext('2d');ctx.fillStyle=bg;ctx.fillRect(0,0,512,192);ctx.fillStyle=fg;ctx.font='900 86px Arial,sans-serif';ctx.textAlign='center';ctx.fillText(text,256,107);ctx.fillStyle='#f4fbf8';ctx.font='bold 27px Arial,sans-serif';ctx.fillText(sub,256,157);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
+}
+function addBanner(z){const y=4.7;for(const x of [-7.5,7.5])mesh(new THREE.CylinderGeometry(.1,.14,5.6,7),mats.dark,x,2.72,z,true);mesh(new THREE.BoxGeometry(15.1,.17,.18),mats.dark,0,5.45,z);const sign=new THREE.Mesh(new THREE.PlaneGeometry(6.8,2.2),new THREE.MeshBasicMaterial({map:boardTexture('FINISH','100M · CHALLENGE'),side:THREE.DoubleSide}));sign.position.set(0,4.48,z);scene.add(sign);for(const x of [-6.4,6.4]){const flag=mesh(new THREE.BoxGeometry(.8,.6,.04),mats.lime,x,5.9,z);flag.rotation.z=.15}}
+addBanner(FINISH_Z-2.4);
+// 场边设施
+const treeGreens=[mat(0x4b9769),mat(0x5ba579),mat(0x3f836e)];
+const tempRand=(n)=>((Math.sin(n*12.9898+78.233)*43758.5453123)%1+1)%1;
+for(let i=0;i<46;i++){
+ const z=-114+i*3.15;
+ for(const side of [-1,1]){
+  if(i%4===1){const x=side*(15+tempRand(i*3+side)*4);mesh(new THREE.CylinderGeometry(.13,.2,2,5),mats.trunk,x,.94,z,true);const h=2.2+tempRand(i+7)*.8;const crown=mesh(new THREE.ConeGeometry(1.35,h,6),treeGreens[i%3],x,2.0+h*.3,z,true);crown.rotation.y=i*.5}
+  if(i%3===0){mesh(new THREE.BoxGeometry(3.15,.28,.9),mats.stands,side*11.05,.15,z,false);mesh(new THREE.BoxGeometry(2.8,.18,1.05),mats.stands,side*11.7,.48,z,false);}
+ }
+}
+const fanPalette=[0xffb661,0xff735a,0x69cbd5,0xfbf9e9,0x9fb4ed,0xd0ff78];const fanMats=fanPalette.map(c=>mat(c));
+for(let i=0;i<90;i++){
+ let z=-110+tempRand(i*5)*122,side=i%2?1:-1,x=side*(9.0+tempRand(i*7)*3);
+ const p=mesh(new THREE.SphereGeometry(.19,5,4),i%7===0?mats.skin:fanMats[i%fanMats.length],x,.75+tempRand(i*4)*.43,z,false);p.scale.y=1.1;
+}
+// 角落彩旗
+for(let i=0;i<19;i++){const z=4-i*6.4,x=(i%2?1:-1)*8.1;mesh(new THREE.CylinderGeometry(.035,.035,3.0,6),mats.dark,x,1.45,z);const f=mesh(new THREE.BoxGeometry(.72,.5,.035),i%2?mats.lime:mat(0xffffff),x+.38,2.7,z);f.rotation.y=.12}
+// 路边米数标牌
+for(let m=25;m<=75;m+=25){const sign=new THREE.Mesh(new THREE.PlaneGeometry(1.3,.52),new THREE.MeshBasicMaterial({map:boardTexture(String(m)+'M','DISTANCE'),side:THREE.DoubleSide}));sign.position.set(-7.8,.77,START_Z-m);sign.rotation.y=.32;scene.add(sign)}
+function runnerModel(index,r){
+ const root=new THREE.Group();scene.add(root);root.position.set(LANE_X[index],0,START_Z);
+ const color=mat(r.color),pale=mat(0xfcceaa),shorts=mat(0x304761),hair=mat(0x3c2f32),shoe=mat(index===2?0xe6ff75:0xf4f8f7);
+ const torsoBase=new THREE.Group();root.add(torsoBase);
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.30,.62,5,9),color);torso.position.y=1.39;torso.castShadow=true;torsoBase.add(torso);
+ const waist=new THREE.Mesh(new THREE.BoxGeometry(.45,.29,.27),shorts);waist.position.y=.97;waist.castShadow=true;torsoBase.add(waist);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.255,14,9),pale);head.position.set(0,2.13,-.04);head.castShadow=true;torsoBase.add(head);
+ const hairMesh=new THREE.Mesh(new THREE.SphereGeometry(.256,12,7,0,Math.PI*2,0,Math.PI*.48),hair);hairMesh.position.set(0,2.225,-.05);hairMesh.castShadow=true;torsoBase.add(hairMesh);
+ for(const x of [-.092,.092]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.027,7,5),hair);eye.position.set(x,2.16,-.277);torsoBase.add(eye)}
+ const arms=[],legs=[];
+ for(let s of [-1,1]){
+  const shoulder=new THREE.Group();shoulder.position.set(s*.39,1.72,0);torsoBase.add(shoulder);
+  const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.34,4,7),pale);upper.position.set(0,-.29,.01);upper.castShadow=true;shoulder.add(upper);
+  const cuff=new THREE.Mesh(new THREE.SphereGeometry(.11,8,6),color);cuff.position.set(0,-.065,0);shoulder.add(cuff);arms.push(shoulder);
+  const hip=new THREE.Group();hip.position.set(s*.2,.87,0);root.add(hip);
+  const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.12,.43,5,8),pale);leg.position.set(0,-.38,0);leg.castShadow=true;hip.add(leg);
+  const foot=new THREE.Mesh(new THREE.BoxGeometry(.235,.17,.43),shoe);foot.position.set(0,-.74,-.145);foot.castShadow=true;hip.add(foot);legs.push(hip);
+ }
+ if(r.me){const arrow=new THREE.Mesh(new THREE.ConeGeometry(.22,.38,4),new THREE.MeshBasicMaterial({color:0xe4ff6f}));arrow.position.set(0,2.95,0);arrow.rotation.z=Math.PI;root.add(arrow)}
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:0x20374b,transparent:true,opacity:.16,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.061;root.add(shadow);
+ return {root,torsoBase,arms,legs,shadow,animPhase:tempRand(index)*Math.PI*2,vel:0,dist:0,finish:null};
+}
+const runners=RUNNERS.map((r,i)=>({...r,...runnerModel(i,r)}));const player=runners[2];
+const dustMat=new THREE.MeshBasicMaterial({color:0xf8f5cb,transparent:true,opacity:.7,depthWrite:false});const dust=[];
+function spawnDust(){for(let i=0;i<3;i++){const dot=new THREE.Mesh(new THREE.SphereGeometry(.05+tempRand(game.seed++)*.06,5,4),dustMat.clone());dot.position.set(player.root.position.x+(tempRand(game.seed++)-.5)*.5,.1,player.root.position.z+.1);scene.add(dot);dust.push({dot,life:.55,vel:new THREE.Vector3((tempRand(game.seed++)-.5)*.8,.4+tempRand(game.seed++)*.7,.35+tempRand(game.seed++)*.65)});if(dust.length>45){const old=dust.shift();scene.remove(old.dot);old.dot.material.dispose();old.dot.geometry.dispose()}}}
+function say(text){game.toastTTL=.68;game.toastMessage=text;$('toast').textContent=text;$('toast').style.opacity=1}
+function resize(){const el=$('world');const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.fov=w<620?72:56;camera.updateProjectionMatrix()}
+window.addEventListener('resize',resize);resize();
+function reset(){game.state='ready';game.elapsed=0;game.remaining=3.15;game.playerSpeed=0;game.energy=100;game.combo=0;game.maxCombo=0;game.lastFoot=null;game.lastStep=-100;game.progress=0;game.rank=3;game.toastTTL=0;$('toast').style.opacity=0;$('resultOverlay').style.display='none';$('introOverlay').style.display='grid';$('countdown').style.display='none';runners.forEach((r,i)=>{r.dist=0;r.vel=0;r.finish=null;r.animPhase=i;r.root.position.set(LANE_X[i],0,START_Z)});for(const d of dust){scene.remove(d.dot);d.dot.material.dispose();d.dot.geometry.dispose()}dust.length=0;updateHUD()}
+function startRace(){if(game.state==='countdown'||game.state==='race')return;if(game.state==='finished')reset();game.state='countdown';game.remaining=3.13;game.elapsed=0;game.lastFoot=null;game.lastStep=-100;$('introOverlay').style.display='none';$('resultOverlay').style.display='none';$('countdown').style.display='flex';$('countdown').textContent='3';tone(440,.09)}
+function step(foot){if(game.state!=='race')return;const now=game.elapsed;const diff=now-game.lastStep;
+ if(game.lastFoot===foot){game.combo=0;game.playerSpeed=Math.max(0,game.playerSpeed-1.55);say('左右交替！');tone(210,.10,'triangle',.035);return}
+ if(diff<.115){game.playerSpeed=Math.max(0,game.playerSpeed-.25);say('别着急！');return}
+ if(diff>.72&&game.lastStep>=0)game.combo=0;
+ game.lastFoot=foot;game.lastStep=now;game.combo++;game.maxCombo=Math.max(game.combo,game.maxCombo);
+ let perfect=diff>=.17&&diff<=.45;let power=1.16+(perfect?.33:0)+Math.min(game.combo,15)*.03;
+ if(game.energy<18)power*=.68;
+ game.playerSpeed=Math.min(11.5,game.playerSpeed+power);
+ game.energy=Math.max(0,game.energy-(diff<.20?4.7:1.95));
+ spawnDust();if(game.combo%5===0&&game.combo>0)say(game.combo>=15?'🔥 超神节奏！':'节奏漂亮！');
+ tone(perfect?590:420,.045,'triangle',.024);
+}
+function finishRace(){player.finish=game.elapsed;game.state='finished';$('resultOverlay').style.display='grid';$('countdown').style.display='none';const rank=1+runners.filter(r=>!r.me&&r.finish!==null).length;game.rank=rank;$('resultBig').textContent='#'+rank;$('resultTitle').textContent=rank===1?'冠军！你就是风一样的速度！':rank<=3?'登上领奖台！':rank===4?'差一点，继续加油！':'再练一次节奏，下次逆袭！';$('resultTime').textContent=game.elapsed.toFixed(2)+'s';$('resultCombo').textContent=String(game.maxCombo);
+ let record=null;try{record=Number(localStorage.getItem('stride100-best'))||null;if(!record||game.elapsed<record){record=game.elapsed;localStorage.setItem('stride100-best',record.toFixed(2));$('bestLabel').textContent='🏆 新纪录！个人最好 '+record.toFixed(2)+' 秒'}else $('bestLabel').textContent='个人最好 '+record.toFixed(2)+' 秒'}catch(e){$('bestLabel').textContent='100米冲刺 · 再接再厉'}
+ tone(rank===1?780:530,.19,'sine',.07);setTimeout(()=>tone(900,.21,'sine',.06),130)}
+$('startBtn').addEventListener('click',startRace);$('againBtn').addEventListener('click',()=>{reset();startRace()});
+$('mute').addEventListener('click',()=>{game.sound=!game.sound;$('mute').textContent=game.sound?'♫':'✕';$('mute').setAttribute('aria-label',game.sound?'关闭声音':'开启声音')});
+const footButtons=[['leftFoot','L'],['rightFoot','R']];for(const [id,f] of footButtons){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('pressed');step(f)});const unpress=()=>b.classList.remove('pressed');b.addEventListener('pointerup',unpress);b.addEventListener('pointercancel',unpress);b.addEventListener('pointerleave',unpress);b.addEventListener('click',e=>e.preventDefault())}
+window.addEventListener('keydown',e=>{if(['KeyA','KeyD','ArrowLeft','ArrowRight','Space','Enter'].includes(e.code))e.preventDefault();if(e.repeat)return;if(e.code==='Space'||e.code==='Enter'){if(game.state==='ready')startRace();else if(game.state==='finished'){reset();startRace()}return}if(e.code==='KeyA'||e.code==='ArrowLeft'){step('L');$('leftFoot').classList.add('pressed')}else if(e.code==='KeyD'||e.code==='ArrowRight'){step('R');$('rightFoot').classList.add('pressed')}});
+window.addEventListener('keyup',e=>{if(['KeyA','ArrowLeft'].includes(e.code))$('leftFoot').classList.remove('pressed');if(['KeyD','ArrowRight'].includes(e.code))$('rightFoot').classList.remove('pressed')});
+let lastShown=-1;
+function updateHUD(){const d=Math.min(100,game.progress),pct=d/DISTANCE*100;$('progressFill').style.width=pct+'%';$('progressKnob').style.left=pct+'%';$('distanceLabel').textContent=d.toFixed(1)+' / 100 M';const t=game.elapsed.toFixed(2).split('.');$('time').innerHTML=String(Math.floor(t[0]/60)).padStart(2,'0')+':'+String(t[0]%60).padStart(2,'0')+'<em>.'+t[1]+'</em>';$('rank').innerHTML=game.rank+'<em> / 6</em>';$('speed').textContent=game.playerSpeed.toFixed(1);$('speedFill').style.width=(game.playerSpeed/11.5*100)+'%';$('energyFill').style.width=game.energy.toFixed(1)+'%';$('energyText').textContent=Math.floor(game.energy)+'%';$('comboNum').textContent=game.combo;$('comboText').textContent=game.combo>=15?'HOT STREAK!':game.combo>=5?'继续保持！':game.state==='race'?'左右交替！':'等待起跑';
+ let sorted=[...runners].sort((a,b)=>b.dist-a.dist || ((a.finish??Infinity)-(b.finish??Infinity)));game.rank=sorted.indexOf(player)+1;
+ if(game.state==='race'||game.state==='finished')$('rank').innerHTML=game.rank+'<em> / 6</em>';
+ $('rankingRows').innerHTML=sorted.map((r,i)=>'<div class="player-row '+(r.me?'me':'')+'"><span class="pos">'+(i+1)+'</span><span class="dot" style="background:#'+r.color.toString(16).padStart(6,'0')+'"></span><span class="name">'+r.name+'</span><span class="meters">'+Math.min(100,r.dist).toFixed(0)+'m</span></div>').join('');}
+function animateRunners(dt,time){for(let i=0;i<runners.length;i++){const r=runners[i];r.root.position.z=START_Z-r.dist;const v=r.me?game.playerSpeed:r.vel;const running=(game.state==='race'||game.state==='finished')&&v>.2;const amplitude=Math.min(1,v/7.5);
+ r.animPhase+=dt*(running?4+v*1.75:1.3);const s=Math.sin(r.animPhase);r.legs[0].rotation.x=s*.69*amplitude;r.legs[1].rotation.x=-s*.69*amplitude;r.arms[0].rotation.x=-s*.75*amplitude;r.arms[1].rotation.x=s*.75*amplitude;r.torsoBase.position.y=running?Math.abs(Math.sin(r.animPhase*2))*.055*amplitude:Math.sin(time*1.6+i)*.018;r.torsoBase.rotation.x=running?-.095*amplitude:0;r.root.rotation.z=Math.sin(r.animPhase)*.023*amplitude;r.shadow.material.opacity=.18-(running?Math.abs(Math.sin(r.animPhase*2))*.04:0)}
+}
+function updateDust(dt){for(let i=dust.length-1;i>=0;i--){const p=dust[i];p.life-=dt;p.dot.position.addScaledVector(p.vel,dt);p.vel.y-=dt*2;p.dot.scale.setScalar(Math.max(.08,p.life/.55));p.dot.material.opacity=Math.max(0,p.life/.55)*.55;if(p.life<=0){scene.remove(p.dot);p.dot.geometry.dispose();p.dot.material.dispose();dust.splice(i,1)}}}
+function updateCam(dt){const targetPos=game.state==='ready'?new THREE.Vector3(8.8,8.0,24):new THREE.Vector3(player.root.position.x+1.9,5.9,player.root.position.z+13.2);const look=game.state==='ready'?new THREE.Vector3(0,1,-13):new THREE.Vector3(player.root.position.x,1.45,player.root.position.z-16.3);camera.position.lerp(targetPos,1-Math.exp(-dt*2.6));if(!updateCam.at)updateCam.at=new THREE.Vector3(0,1,-13);updateCam.at.lerp(look,1-Math.exp(-dt*2.8));camera.lookAt(updateCam.at);sun.position.z=player.root.position.z+28;sun.target.position.z=player.root.position.z-20}
+const clock=new THREE.Clock();let frameCount=0,acc=0;
+function loop(){requestAnimationFrame(loop);const dt=Math.min(.045,clock.getDelta()),tm=clock.elapsedTime;
+ if(game.state==='countdown'){
+  const before=Math.ceil(game.remaining);game.remaining-=dt;const after=Math.ceil(game.remaining);if(before!==after){if(after>0){$('countdown').textContent=after;tone(440,.08)}else{$('countdown').textContent='GO!';tone(850,.22,'triangle',.08)}}
+  if(game.remaining<=-.55){game.state='race';$('countdown').style.display='none';game.elapsed=0;game.lastStep=-100}
+ }
+ if(game.state==='race'){
+  game.elapsed+=dt;
+  game.energy=Math.min(100,game.energy+dt*(game.playerSpeed<4?7.5:4.2));
+  game.playerSpeed=Math.max(0,game.playerSpeed-(.63+game.playerSpeed*.085)*dt);
+  player.dist=Math.min(DISTANCE,player.dist+game.playerSpeed*dt);game.progress=player.dist;
+  for(let i=0;i<runners.length;i++){const r=runners[i];if(r.me||r.finish!==null)continue;const ease=Math.min(r.speed,r.vel+2.15*dt);r.vel=ease*(1+Math.sin(game.elapsed*1.7+i*.9)*.018);r.dist=Math.min(DISTANCE,r.dist+r.vel*dt);if(r.dist>=DISTANCE)r.finish=game.elapsed}
+  if(game.progress>=DISTANCE)finishRace();
+ }
+ if(game.toastTTL>0){game.toastTTL-=dt;if(game.toastTTL<=0)$('toast').style.opacity=0}
+ animateRunners(dt,tm);updateDust(dt);updateCam(dt);
+ frameCount++;if(frameCount%5===0||game.state==='finished')updateHUD();renderer.render(scene,camera)
+}
+camera.position.set(8.8,8,24);camera.lookAt(0,1,-13);reset();loop();
+}
+</script>
+</body>
+</html>
