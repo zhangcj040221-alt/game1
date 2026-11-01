@@ -122,39 +122,49 @@ tube('Trailing vine',[(-2.3,3.0,.43),(-1.65,2.8,.55),(-1.9,2.1,.52),(-2.15,1.55,
 for x,y,s,a in [(-2.05,2.75,.8,-.7),(-1.47,2.6,.64,.6),(-1.85,2.05,.6,-.5),(-2.2,1.57,.53,.8),(-1.97,1.0,.42,-.5)]:leaf('Basil leaf',(x,y,.63),s,lime,a)
 # Character: a broad face, tiny torso, deliberate asymmetry in the cooking pose.
 uv('Compact jacket body',(0,-.92,.98),(.78,.85,.52),white)
-uv('Face soft caramel',(0,.60,1.19),(1.39,1.15,.73),fur,64,40)
-for x in (-1.13,1.13):
- uv('Round bear ear',(x,1.38,1.02),(.36,.37,.22),fur)
- uv('Ear inner',(x,1.40,1.225),(.22,.23,.045),inner)
-for x in (-.48,.48):uv('Espresso eye',(x,.65,1.892),(.105,.125,.043),ink)
+# A squishy rounded-square head, with full cheeks and a deeper toy silhouette.
+HEAD_A,HEAD_B,HEAD_C,HEAD_Y,HEAD_Z,HEAD_E=1.48,1.14,.86,.61,1.16,.86
+head=uv('Face soft caramel',(0,HEAD_Y,HEAD_Z),(1,1,1),fur,64,40)
+for v in head.data.vertices:
+ q=v.co.copy()
+ for k,scale in enumerate((HEAD_A,HEAD_B,HEAD_C)):
+  v.co[k]=math.copysign(abs(q[k])**HEAD_E,q[k])*scale
+head.data.update()
+def face_depth(x,y):
+ p=2/HEAD_E
+ return HEAD_Z+HEAD_C*max(.00001,1-abs(x/HEAD_A)**p-abs((y-HEAD_Y)/HEAD_B)**p)**(1/p)
+for x in (-1.20,1.20):
+ uv('Round bear ear',(x,1.40,1.07),(.37,.38,.27),fur)
+ uv('Ear inner',(x,1.42,1.316),(.215,.225,.028),inner)
+for x in (-.51,.51):uv('Espresso eye',(x,.65,face_depth(x,.65)+.008),(.108,.12,.025),ink)
 # Blush follows the ellipsoid surface, with no button-like protrusion.
-for cx in (-.91,.91):
+for cx in (-.98,.98):
  vs=[];nr=6;ns=40
  for j in range(nr+1):
   r=j/nr
   for i in range(ns):
-   a=i*math.tau/ns;x=cx+.25*r*math.cos(a);y=.25+.235*r*math.sin(a)
-   z=1.19+.73*math.sqrt(max(.001,1-(x/1.39)**2-((y-.60)/1.15)**2))+.006
+   a=i*math.tau/ns;x=cx+.26*r*math.cos(a);y=.25+.25*r*math.sin(a)
+   z=face_depth(x,y)+.008
    vs.append((x,y,z))
  fs=[(j*ns+i,j*ns+(i+1)%ns,(j+1)*ns+(i+1)%ns,(j+1)*ns+i) for j in range(nr) for i in range(ns)]
  me=bpy.data.meshes.new('Surface blush');me.from_pydata(vs,[],fs);me.update();o=bpy.data.objects.new('Golden cheek surface',me);bpy.context.collection.objects.link(o);o.data.materials.append(yellow);smooth(o)
 # The original mascot has a W smile and pink tongue, not an O mouth.
-uv('Smile open',(0,.29,1.928),(.135,.18,.025),ink)
-uv('Pink tongue',(0,.255,1.956),(.086,.12,.012),pink)
-tube('W shaped smile',[(-.19,.46,1.933),(-.15,.385,1.955),(-.07,.395,1.96),(0,.445,1.96),(.075,.385,1.96),(.16,.405,1.95),(.18,.46,1.93)],.025,ink)
+uv('Smile open',(0,.29,face_depth(0,.29)+.012),(.137,.18,.023),ink)
+uv('Pink tongue',(0,.255,face_depth(0,.255)+.038),(.09,.12,.012),pink)
+tube('W shaped smile',[(x,y,face_depth(x,y)+.021) for x,y in [(-.19,.46),(-.15,.385),(-.07,.395),(0,.445),(.075,.385),(.16,.405),(.18,.46)]],.024,ink)
 # Chef hat: a band plus three bold inflated lobes; less blobby than before.
-box('Chef hat band',(0,1.67,1.25),(1.42,.32,.72),white,.13)
-for x,y,s in [(-.52,2.08,.39),(0,2.25,.48),(.53,2.08,.39)]:uv('Hat crown',(x,y,1.16),(s,s*.98,.4),white)
-for x in (-.42,0,.42):tube('Hat seam',[(x,1.78,1.625),(x*.95,2.0,1.60)],.012,ivory)
+box('Chef hat band',(0,1.70,1.31),(1.48,.34,.82),white,.15)
+for x,y,s in [(-.51,2.12,.42),(-.03,2.33,.48),(.52,2.15,.40)]:uv('Hat crown',(x,y,1.24),(s,s*.99,.43),white)
+for x in (-.42,0,.42):tube('Hat seam',[(x,1.82,1.726),(x*.95,2.02,1.67)],.012,ivory)
 # Flared jacket skirt, pressed pocket, scarf tails.
 # Rounded trapezoid jacket hem built as ring mesh.
 vs=[]
-for y,w,z,d in [(-.7,.64,1.03,.45),(-1.58,.92,1.03,.49)]:
+for y,w,z,d in [(-.52,.52,1.06,.39),(-.73,.70,1.06,.47),(-1.17,.84,1.06,.51),(-1.43,.82,1.06,.48),(-1.56,.68,1.06,.40)]:
  for i in range(32):
   a=2*math.pi*i/32;vs.append((math.cos(a)*w,y,z+math.sin(a)*d))
-fs=[tuple(range(31,-1,-1)),tuple(range(32,64))]+[(i,(i+1)%32,(i+1)%32+32,i+32) for i in range(32)]
+fs=[tuple(range(31,-1,-1)),tuple(range(128,160))]+[(j*32+i,j*32+(i+1)%32,(j+1)*32+(i+1)%32,(j+1)*32+i) for j in range(4) for i in range(32)]
 me=bpy.data.meshes.new('Coat hem');me.from_pydata(vs,[],fs);me.update();o=bpy.data.objects.new('Flared chef coat',me);bpy.context.collection.objects.link(o);o.data.materials.append(white);smooth(o)
-for x in (-.48,.48):uv('Little caramel foot',(x,-1.73,1.01),(.3,.24,.35),fur)
+for x in (-.48,.48):uv('Little caramel foot',(x,-1.69,1.09),(.33,.265,.37),fur)
 for y in (-.68,-.99):uv('Chocolate jacket button',(-.31,y,1.505),(.057,.065,.028),ink)
 box('Apron pocket',(0,-1.28,1.53),(.67,.43,.055),white,.12)
 tube('Apron pocket stitch',[(-.31,-1.12,1.568),(-.29,-1.41,1.568),(0,-1.47,1.57),(.29,-1.41,1.568),(.31,-1.12,1.568)],.012,ivory)
@@ -165,14 +175,16 @@ uv('Scarf knot',(0,-.47,1.59),(.15,.13,.09),red)
 for x,a in [(-.13,-.5),(.13,.5)]:
  o=uv('Scarf pointed tail',(x,-.67,1.57),(.12,.26,.055),red);o.rotation_euler[2]=a
 link('Raised left sleeve',(-.64,-.69,1.0),(-1.29,-.21,1.33),.205,white)
-uv('Left paw',(-1.44,-.04,1.38),(.22,.23,.19),fur)
+uv('Left paw',(-1.44,-.04,1.38),(.24,.25,.21),fur)
+uv('Left mitten thumb',(-1.31,.025,1.53),(.105,.12,.105),fur)
 link('Spatula red grip',(-1.51,.0,1.51),(-1.69,.62,1.51),.095,red)
 link('Spatula steel neck',(-1.69,.62,1.51),(-1.79,.98,1.51),.04,pan)
 # Three slots are real gaps, not a blank block.
 for x in (-1.98,-1.80,-1.62):box('Spatula slotted bar',(x,1.24,1.51),(.065,.53,.06),opal,.028)
 for y in (.99,1.51):box('Spatula cross bar',(-1.8,y,1.51),(.47,.07,.06),opal,.025)
 link('Right sleeve',(.64,-.68,1.0),(1.16,-.63,1.33),.205,white)
-uv('Right paw',(1.28,-.61,1.4),(.20,.22,.18),fur)
+uv('Right paw',(1.28,-.61,1.4),(.23,.24,.20),fur)
+uv('Right mitten thumb',(1.43,-.53,1.49),(.105,.115,.10),fur)
 link('Wok handle',(1.22,-.55,1.47),(1.76,-.33,1.51),.075,pan)
 # Concave open pan, lathed surface in XY with +Z toward viewer.
 vs=[]; rings=[(0,-.17),(.25,-.15),(.53,-.08),(.76,.1),(.78,.17),(.72,.17),(.52,-.015),(.24,-.09),(0,-.1)]
@@ -267,8 +279,17 @@ def sculpt_union(names,name,voxel=.035):
  bpy.ops.object.modifier_apply(modifier=rem.name)
  mod=o.modifiers.new('Soft sculpt finish','SMOOTH');mod.factor=.65;mod.iterations=5
  bpy.ops.object.modifier_apply(modifier=mod.name);smooth(o)
-sculpt_union(['Chef hat band','Hat crown'],'Sculpted chef hat')
-sculpt_union(['Compact jacket body','Flared chef coat','Raised left sleeve','Right sleeve'],'Sculpted chef cotton')
+sculpt_union(['Chef hat band','Hat crown'],'Sculpted chef hat',.025)
+sculpt_union(['Compact jacket body','Flared chef coat','Raised left sleeve','Right sleeve'],'Sculpted chef cotton',.028)
+sculpt_union(['Left paw','Left mitten thumb'],'Soft left mitten',.022)
+sculpt_union(['Right paw','Right mitten thumb'],'Soft right mitten',.022)
+# A restrained head tilt gives the statuette a living, curious pose.
+from mathutils import Matrix
+pivot=Vector((0,HEAD_Y,HEAD_Z))
+pose=Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(-4),4,'Z') @ Matrix.Translation(-pivot)
+head_prefixes=('Face soft caramel','Round bear ear','Ear inner','Espresso eye','Golden cheek surface','Smile open','Pink tongue','W shaped smile','Sculpted chef hat','Hat seam')
+for obj in bpy.context.scene.objects:
+ if obj.name.startswith(head_prefixes):obj.matrix_world=pose @ obj.matrix_world
 # Curves/text must become mesh for a portable glTF asset.
 for obj in list(bpy.context.scene.objects):
  if obj.type in {'CURVE','FONT'}:
