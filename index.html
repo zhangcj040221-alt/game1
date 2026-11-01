@@ -1,34 +1,33 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#17121c">
-<title>厨师布 · 立体典藏卡</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 40%,#50352a,#17121c 68%);color:#fbe7c5;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;min-height:100dvh}
-main{height:100dvh;min-height:480px;display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-width:1100px;margin:auto;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom))}
-header{text-align:center}header small{letter-spacing:.3em;color:#cfa775;font-size:10px}h1{font-size:22px;margin:8px 0}header p{font-size:12px;color:#ccb39a;margin:0}
-#stage{position:relative;min-height:0;touch-action:pan-y;cursor:grab}#stage:active{cursor:grabbing}canvas{display:block;width:100%;height:100%}
-#poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 18px 35px #0008);pointer-events:none}
-footer{text-align:center;z-index:1}#status{font-size:12px;color:#ccb39a;min-height:32px;margin:8px 0;line-height:1.6}.controls{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-button,.link{font:inherit;font-size:13px;border:1px solid #957044;border-radius:12px;padding:11px 16px;color:#fbe7c5;background:#2f242b;cursor:pointer}button:disabled{opacity:.4;cursor:default}button[aria-pressed="true"],#upgrade{background:linear-gradient(135deg,#e4b76e,#9a622c);color:#281b15}button:focus-visible,a:focus-visible{outline:2px solid #ffe5a0;outline-offset:4px}
-.link{display:inline-block;margin-top:12px;background:none;border:0;font-size:11px;color:#cfa775;padding:4px}#flash{position:absolute;inset:0;pointer-events:none;border-radius:30%;opacity:0;background:radial-gradient(ellipse,#ffe7ab55,transparent 65%)}.burst #flash{animation:flash 1.4s ease-out}@keyframes flash{15%{opacity:1}100%{opacity:0}}[hidden]{display:none!important}
-@media(prefers-reduced-motion:reduce){.burst #flash{animation:none}}
-</style>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#151319">
+<link rel="icon" href="data:,"><title>厨师布 · 黄金小厨房</title><link rel="stylesheet" href="./card.css">
 </head>
 <body>
 <main>
-<header><small>CHEF BU · COLLECTIBLE</small><h1>厨师布 · 立体典藏卡</h1><p>一间温暖的小厨房，一位认真做饭的厨师</p></header>
-<section id="stage" aria-label="厨师布三维卡牌，左右拖动查看层次">
-<img id="poster" src="./assets/chef_bu_preview.png" alt="厨师布现有模型的离线渲染预览"><div id="flash"></div>
+<header><div class="eyebrow">THE GOLDEN KITCHEN <span>✦</span> 001</div><h1>厨师布<span>典藏卡</span></h1><p>把小厨房里的闪光时刻，珍藏起来。</p></header>
+<section id="stage" aria-label="厨师布精绘分层卡面，可拖动产生视差与倾斜" tabindex="0" aria-describedby="keyboard-hint">
+<div class="floor-glow"></div>
+<img id="poster" src="./assets/layers/fallback.jpg" alt="厨师布精绘卡面静态预览">
+<div id="card" hidden>
+<div class="plane background" data-depth="-.45" data-z="-14"><img src="./assets/layers/kitchen.png" alt="" draggable="false"></div>
+<div class="plane character" data-depth=".9" data-z="20"><div class="character-art"><img src="./assets/layers/chef-bu.png" alt="" draggable="false"></div></div>
+<div class="plane border" data-depth=".12" data-z="36"><img src="./assets/layers/frame-foreground.png" alt="" draggable="false"></div>
+<div class="plane foil" data-depth=".12" data-z="37"><div class="foil-light"></div></div>
+<div class="plane atmosphere" data-depth="1.15" data-z="44" aria-hidden="true"><svg viewBox="0 0 750 1000"><defs><linearGradient id="steam" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff1cf" stop-opacity="0"/><stop offset=".5" stop-color="#fff5dc" stop-opacity=".65"/><stop offset="1" stop-color="#fff5dc" stop-opacity="0"/></linearGradient></defs><path class="steam s1" d="M585 566 C687 507 624 466 625 420 S717 353 652 297"/><path class="steam s2" d="M533 577 C650 537 608 493 618 471 S704 428 664 367"/><path class="orbit" d="M101 718 C-10 652 105 604 159 600 M585 609 C812 548 713 693 651 720"/></svg><div id="sparkles"></div></div>
+</div>
+<div id="flash" aria-hidden="true"></div>
 </section>
-<footer>
-<p id="status" role="status" aria-live="polite">正在加载立体卡，先展示已有模型预览……</p>
-<div class="controls"><button id="front" disabled>回正</button><button id="motion" disabled aria-pressed="false">轻动态：关</button><button id="upgrade" disabled>✦ 金光演出</button><button id="retry" hidden>重新加载</button></div>
-<a class="link" href="./assets/chef_bu_preview.png" target="_blank" rel="noopener">打开静态预览 ↗</a>
-</footer>
-</main>
-<script type="module" src="./viewer.js"></script>
+<nav class="levels" aria-label="卡面展示等级">
+<div class="series">CHEF BU <span>·</span> 典藏系列</div>
+<button data-level="5" aria-pressed="true" disabled><span>♛</span><b>Lv.5</b> 镀闪卡</button>
+<button data-level="4" aria-pressed="false" disabled><span>✧</span><b>Lv.4</b> 特效卡</button>
+<button data-level="3" aria-pressed="false" disabled><span>✦</span><b>Lv.3</b> 动态卡</button>
+<button data-level="2" aria-pressed="false" disabled><span>◇</span><b>Lv.2</b> 视差卡</button>
+<button data-level="1" aria-pressed="false" disabled><span>○</span><b>Lv.1</b> 基础卡</button>
+<div class="edition">精绘分层 · 2.5D</div>
+</nav>
+<footer><p id="status" role="status" aria-live="polite">正在打开黄金小厨房……</p><div class="controls"><button id="front" disabled>↺ 回正</button><button id="motion" disabled aria-pressed="false">光影：开</button><button id="tilt" disabled aria-pressed="false">手机倾斜</button><button id="upgrade" disabled><span>▶</span> 播放升级动画</button><button id="retry" hidden>重新加载</button></div><p id="keyboard-hint">拖动倾斜 · 方向键微调 · 双击回正</p></footer>
+</main><script type="module" src="./viewer.js"></script>
 </body></html>

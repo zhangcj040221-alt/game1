@@ -1,138 +1,155 @@
-const stage = document.querySelector('#stage');
-const poster = document.querySelector('#poster');
-const status = document.querySelector('#status');
-const front = document.querySelector('#front');
-const motionButton = document.querySelector('#motion');
-const upgrade = document.querySelector('#upgrade');
-const retry = document.querySelector('#retry');
-let failed = false;
-let renderer;
-let timer = setTimeout(() => fail('加载超时，当前显示静态预览。可以重新加载。'), 25000);
-function fail(message) {
-  failed = true;
-  clearTimeout(timer);
-  if (renderer) { renderer.setAnimationLoop(null); renderer.domElement.hidden = true; }
-  poster.hidden = false;
-  status.textContent = message;
-  for (const button of [front, motionButton, upgrade]) button.disabled = true;
-  retry.hidden = false;
+const $ = selector => document.querySelector(selector);
+const stage = $('#stage'), card = $('#card'), poster = $('#poster'), status = $('#status');
+const front = $('#front'), motion = $('#motion'), tilt = $('#tilt'), upgrade = $('#upgrade'), retry = $('#retry');
+const levels = [...document.querySelectorAll('[data-level]')];
+const planes = [...card.querySelectorAll('[data-depth]')];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+let ready = false, level = 5, lightMotion = !reduce.matches, upgrading = false;
+let target = { x: 0, y: 0 }, current = { x: 0, y: 0 }, frame = 0, last = 0;
+let drag = null, sensor = false, orientationOrigin = null, upgradeTimer, sensorTimer;
+const descriptions = ['基础卡 · 静态珍藏', '视差卡 · 拖动倾斜，感受前后层次', '动态卡 · 小厨房轻轻呼吸', '特效卡 · 蒸汽与星光环绕', '镀闪卡 · 让每一刻都闪闪发光'];
+function draw() {
+  const x = level === 1 ? 0 : current.x, y = level === 1 ? 0 : current.y;
+  card.style.transform = `rotateX(${-y * 8}deg) rotateY(${x * 11}deg)`;
+  for (const plane of planes) {
+    const depth = Number(plane.dataset.depth), z = level === 1 ? 0 : Number(plane.dataset.z);
+    plane.style.transform = `translate3d(${x * depth * 9}px,${y * depth * 7}px,${z}px)`;
+  }
+  card.style.setProperty('--shine-x', `${x * 35}%`);
 }
-retry.onclick = () => location.reload();
-poster.onerror = () => { status.textContent = '静态预览未能加载，请检查网络后重新加载。'; retry.hidden = false; };
-try {
-  const [T, { GLTFLoader }, { RoomEnvironment }] = await Promise.all([
-    import('three'), import('three/addons/loaders/GLTFLoader.js'),
-    import('three/addons/environments/RoomEnvironment.js')
-  ]);
-  if (failed) throw new Error('Load timed out');
-  renderer = new T.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'default' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
-  renderer.outputColorSpace = T.SRGBColorSpace;
-  renderer.toneMapping = T.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
-  renderer.domElement.setAttribute('aria-label', '厨师布立体卡');
-  renderer.domElement.hidden = true;
-  stage.prepend(renderer.domElement);
-  renderer.domElement.addEventListener('webglcontextlost', event => {
-    event.preventDefault();
-    fail('三维显示已中断，已切换到静态预览。');
-  });
-  const scene = new T.Scene();
-  const camera = new T.PerspectiveCamera(34, 1, .1, 200);
-  const pmrem = new T.PMREMGenerator(renderer);
-  const room = new RoomEnvironment();
-  const env = pmrem.fromScene(room, .04);
-  scene.environment = env.texture;
-  room.dispose();
-  pmrem.dispose();
-  scene.add(new T.HemisphereLight(0xffefd9, 0x51405a, 2));
-  const key = new T.DirectionalLight(0xffddae, 3.5);
-  key.position.set(-3, 5, 8); scene.add(key);
-  const fill = new T.DirectionalLight(0xcbd9ff, 1.8);
-  fill.position.set(4, 1, 5); scene.add(fill);
-  const gltf = await new GLTFLoader().loadAsync('./assets/chef_bu.glb');
-  if (failed) { renderer.dispose(); throw new Error('Load timed out'); }
-  const card = new T.Group();
-  const model = gltf.scene;
-  // Blender XY card with +Z front -> glTF XZ card -> upright XY card.
-  model.rotation.x = Math.PI / 2;
-  // Exported scene lights must not compete with the viewer lighting.
-  model.traverse(object => { if (object.isLight || object.isCamera) object.visible = false; });
-  model.updateMatrixWorld(true);
-  const bounds = new T.Box3().setFromObject(model);
-  if (bounds.isEmpty()) throw new Error('Empty model');
-  const center = bounds.getCenter(new T.Vector3());
-  model.position.sub(center);
-  card.add(model); scene.add(card);
-  const size = bounds.getSize(new T.Vector3());
-  // Depth contributes to framing when the card is tilted.
-  function resize() {
-    const width = Math.max(stage.clientWidth, 1), height = Math.max(stage.clientHeight, 1);
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    const tan = Math.tan(T.MathUtils.degToRad(camera.fov / 2));
-    camera.position.set(0, 0, Math.max((size.y + size.z * .4) / (2 * tan), (size.x + size.z * .7) / (2 * tan * camera.aspect)) * 1.2 + size.z / 2);
-    camera.updateProjectionMatrix();
+function tick(now) {
+  frame = 0;
+  const dt = last ? Math.min((now - last) / 1000, .05) : 1 / 60;
+  last = now;
+  const amount = reduce.matches ? 1 : 1 - Math.exp(-dt * 13);
+  current.x += (target.x - current.x) * amount;
+  current.y += (target.y - current.y) * amount;
+  if (Math.abs(current.x - target.x) < .0005) current.x = target.x;
+  if (Math.abs(current.y - target.y) < .0005) current.y = target.y;
+  draw();
+  if (current.x !== target.x || current.y !== target.y) requestDraw();
+}
+function requestDraw() { if (!frame && ready && !document.hidden) frame = requestAnimationFrame(tick); }
+function point(x, y) { target.x = clamp(x, -1, 1); target.y = clamp(y, -1, 1); requestDraw(); }
+function reset() { drag = null; orientationOrigin = null; point(0, 0); }
+function updateMotion() {
+  const animate = lightMotion && !reduce.matches;
+  stage.classList.toggle('is-animated', animate && level >= 3);
+  stage.classList.toggle('motion-off', !animate);
+  motion.textContent = '光影：' + (animate ? '开' : '关');
+  motion.setAttribute('aria-pressed', String(animate));
+}
+function choose(next) {
+  level = next; stage.dataset.level = String(level);
+  for (const button of levels) button.setAttribute('aria-pressed', String(Number(button.dataset.level) === level));
+  if (level === 1) { disableSensor(); reset(); }
+  status.textContent = descriptions[level - 1];
+  updateMotion(); requestDraw();
+}
+function fit() {
+  // Keep enough room for the raised frame and maximum supported tilt.
+  const width = Math.max(1, Math.min(stage.clientWidth * .94, stage.clientHeight * .75 * .94, 730));
+  card.style.width = `${width}px`;
+  requestDraw();
+}
+new ResizeObserver(fit).observe(stage);
+for (const button of levels) button.onclick = () => choose(Number(button.dataset.level));
+front.onclick = reset;
+stage.addEventListener('dblclick', reset);
+motion.onclick = () => { lightMotion = !lightMotion; updateMotion(); };
+reduce.addEventListener('change', () => { if (reduce.matches) lightMotion = false; updateMotion(); requestDraw(); });
+stage.addEventListener('pointerdown', event => {
+  if (!ready || level === 1 || (event.pointerType === 'mouse' && event.button !== 0)) return;
+  disableSensor();
+  drag = { id: event.pointerId, x: event.clientX, y: event.clientY, tx: target.x, ty: target.y };
+  stage.setPointerCapture(event.pointerId);
+});
+stage.addEventListener('pointermove', event => {
+  if (!ready || level === 1 || sensor) return;
+  if (drag && event.pointerId === drag.id) {
+    point(drag.tx + (event.clientX - drag.x) / (stage.clientWidth * .38), drag.ty + (event.clientY - drag.y) / (stage.clientHeight * .4));
+  } else if (!drag && event.pointerType === 'mouse') {
+    const rect = stage.getBoundingClientRect();
+    point((event.clientX - rect.left) / rect.width * 2 - 1, (event.clientY - rect.top) / rect.height * 2 - 1);
   }
-  new ResizeObserver(resize).observe(stage);
-  resize();
-  let tx = 0, ty = 0, dragging = false, pointerId = null;
-  let startX = 0, startY = 0, startRX = 0, startRY = 0;
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  let motion = !reducedMotion.matches, time = 0, burst = 0, last = 0;
-  const food = [];
-  model.traverse(object => {
-    if (/Flying.ingredient/i.test(object.name)) food.push({ object, base: object.position.clone(), phase: food.length * .7 });
-  });
-  function updateMotion() {
-    motionButton.textContent = '轻动态：' + (motion ? '开' : '关');
-    motionButton.setAttribute('aria-pressed', String(motion));
-  }
-  motionButton.onclick = () => { motion = !motion; updateMotion(); };
-  reducedMotion.addEventListener('change', event => { if (event.matches) { motion = false; updateMotion(); } });
-  stage.addEventListener('pointerdown', event => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    dragging = true; pointerId = event.pointerId;
-    startX = event.clientX; startY = event.clientY; startRX = tx; startRY = ty;
-    stage.setPointerCapture(event.pointerId);
-  });
-  stage.addEventListener('pointermove', event => {
-    if (!dragging || event.pointerId !== pointerId) return;
-    tx = T.MathUtils.clamp(startRX + (event.clientX - startX) / stage.clientWidth * 1.8, -.65, .65);
-    ty = T.MathUtils.clamp(startRY + (event.clientY - startY) / stage.clientHeight * .9, -.28, .28);
-  });
-  function release() { dragging = false; pointerId = null; }
-  stage.addEventListener('pointerup', release);
-  stage.addEventListener('pointercancel', release);
-  stage.addEventListener('lostpointercapture', release);
-  front.onclick = () => { release(); tx = ty = 0; };
-  upgrade.onclick = () => {
-    if (reducedMotion.matches) { status.textContent = '已开启减少动态效果，金光演出已简化。'; return; }
-    burst = 1.4; stage.classList.remove('burst');
-    void stage.offsetWidth; stage.classList.add('burst');
-  };
-  clearTimeout(timer);
-  poster.hidden = true;
-  renderer.domElement.hidden = false;
-  for (const button of [front, motionButton, upgrade]) button.disabled = false;
-  updateMotion();
-  status.textContent = '拖动查看真实层次 · 当前为已有模型接入版，美术仍在打磨';
-  renderer.setAnimationLoop(now => {
-    if (document.hidden) { last = now; return; }
-    const dt = last ? Math.min((now - last) / 1000, .05) : 0; last = now;
-    if (motion) time += dt;
-    card.rotation.y = T.MathUtils.damp(card.rotation.y, tx, 9, dt);
-    card.rotation.x = T.MathUtils.damp(card.rotation.x, ty, 9, dt);
-    card.position.y = motion ? Math.sin(time * 1.2) * .04 : 0;
-    for (const item of food) {
-      item.object.position.copy(item.base);
-      if (motion) item.object.position.z += Math.sin(time * 2.5 + item.phase) * .12;
+});
+function release(event) { if (drag?.id === event.pointerId) drag = null; }
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) stage.addEventListener(type, release);
+stage.addEventListener('pointerleave', event => { if (!drag && event.pointerType === 'mouse' && !sensor) reset(); });
+stage.addEventListener('keydown', event => {
+  if (!ready || level === 1 || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) return;
+  event.preventDefault(); disableSensor();
+  if (event.key === 'Home') reset();
+  else point(target.x + (event.key === 'ArrowRight' ? .15 : event.key === 'ArrowLeft' ? -.15 : 0), target.y + (event.key === 'ArrowDown' ? .15 : event.key === 'ArrowUp' ? -.15 : 0));
+});
+function onOrientation(event) {
+  if (!sensor || !ready || level === 1 || !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
+  clearTimeout(sensorTimer);
+  orientationOrigin ??= { beta: event.beta, gamma: event.gamma };
+  const dx = (event.gamma - orientationOrigin.gamma) / 22;
+  const dy = (event.beta - orientationOrigin.beta) / 22;
+  // Map device axes to screen orientation, including landscape.
+  const angle = (screen.orientation?.angle ?? window.orientation ?? 0) * Math.PI / 180;
+  point(dx * Math.cos(angle) + dy * Math.sin(angle), dy * Math.cos(angle) - dx * Math.sin(angle));
+}
+function disableSensor() {
+  if (!sensor) return;
+  sensor = false; orientationOrigin = null; clearTimeout(sensorTimer);
+  window.removeEventListener('deviceorientation', onOrientation);
+  tilt.setAttribute('aria-pressed', 'false'); tilt.textContent = '手机倾斜';
+}
+tilt.onclick = async () => {
+  if (sensor) { disableSensor(); reset(); return; }
+  try {
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission !== 'granted') { status.textContent = '未开启倾斜权限，仍可拖动卡面。'; return; }
     }
-    burst = Math.max(0, burst - dt);
-    renderer.toneMappingExposure = 1.1 + Math.sin(burst / 1.4 * Math.PI) * .5;
-    renderer.render(scene, camera);
-  });
-} catch (error) {
-  console.error('Chef Bu viewer:', error);
-  if (!failed) fail('暂时无法打开三维卡，当前显示静态预览。请检查网络或 WebGL 支持。');
+    if (level === 1) choose(2);
+    sensor = true; orientationOrigin = null;
+    window.addEventListener('deviceorientation', onOrientation);
+    tilt.setAttribute('aria-pressed', 'true'); tilt.textContent = '倾斜已开启';
+    status.textContent = '以当前姿态为中心，轻轻倾斜手机；回正可重新校准。';
+    sensorTimer = setTimeout(() => { if (sensor && !orientationOrigin) status.textContent = '尚未收到倾斜数据，可继续拖动；请使用支持感应的手机。'; }, 3000);
+  } catch { status.textContent = '暂时无法读取设备倾斜，仍可拖动卡面。'; }
+};
+upgrade.onclick = () => {
+  choose(5);
+  if (reduce.matches) { status.textContent = '已切换镀闪卡；按减少动态偏好简化演出。'; return; }
+  if (upgrading) return;
+  upgrading = true; upgrade.disabled = true;
+  stage.classList.remove('upgrading'); void stage.offsetWidth; stage.classList.add('upgrading');
+  status.textContent = '✦ 厨师布 · 镀闪典藏';
+  clearTimeout(upgradeTimer);
+  upgradeTimer = setTimeout(() => {
+    stage.classList.remove('upgrading'); upgrading = false; upgrade.disabled = false;
+    status.textContent = descriptions[level - 1];
+  }, 1800);
+};
+retry.onclick = () => location.reload();
+poster.addEventListener('error', () => { status.textContent = '卡面未能加载，请重新加载。'; retry.hidden = false; });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (frame) cancelAnimationFrame(frame); frame = 0; }
+  else { last = 0; requestDraw(); }
+});
+window.addEventListener('pagehide', () => { disableSensor(); clearTimeout(upgradeTimer); });
+// Deterministic glints keep the composition stable across reloads.
+for (let i = 0; i < 28; i++) {
+  const sparkle = document.createElement('i'); sparkle.className = 'spark';
+  const side = i % 2 ? .93 : .06;
+  sparkle.style.cssText = `left:${(side + Math.sin(i * 2.4) * .055) * 100}%;top:${12 + (i * 31 % 75)}%;--delay:-${i * .31}s;--duration:${2.5 + i % 4 * .4}s`;
+  $('#sparkles').append(sparkle);
+}
+try {
+  await Promise.all([...card.querySelectorAll('img')].map(image => image.decode()));
+  ready = true;
+  poster.hidden = true; card.hidden = false;
+  for (const button of [front, motion, upgrade, ...levels]) button.disabled = false;
+  if ('DeviceOrientationEvent' in window && isSecureContext) tilt.disabled = false;
+  else tilt.title = '当前设备或浏览器不支持倾斜感应，可拖动卡面。';
+  fit(); choose(5);
+} catch {
+  card.hidden = true; poster.hidden = false;
+  status.textContent = '图层暂未加载完整，当前显示静态卡面。'; retry.hidden = false;
 }
