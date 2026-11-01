@@ -34,7 +34,13 @@ jobs:
           git add assets/character_test/
           if ! git diff --cached --quiet; then
             git commit -m "Render character study [skip ci]"
-            git fetch origin main
-            git rebase origin/main
-            git push origin HEAD:main
+            for attempt in 1 2 3 4 5; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then exit 1; fi
+              sleep 3
+            done
           fi
