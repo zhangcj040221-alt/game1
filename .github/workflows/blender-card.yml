@@ -7,6 +7,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: blender-card-main
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,4 +32,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add assets/chef_bu.glb assets/chef_bu_preview.png
-          git diff --cached --quiet || (git commit -m "Render Chef Bu Blender assets [skip ci]" && git push)
+          if ! git diff --cached --quiet; then
+            git commit -m "Render Chef Bu Blender assets [skip ci]"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
