@@ -11,7 +11,7 @@ out=os.path.join(root,"assets");os.makedirs(out,exist_ok=True)
 def mat(name,color,metal=0,rough=.5,subsurface=0):
  m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True
  p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=metal;p.inputs['Roughness'].default_value=rough
- p.inputs['Subsurface Weight'].default_value=subsurface
+ sub=p.inputs.get('Subsurface Weight') or p.inputs.get('Subsurface');\n if sub: sub.default_value=subsurface
  return m
 gold=mat('Champagne gold',(.8,.43,.09),.82,.18)
 rim=mat('Gold edge highlight',(1,.77,.34),.72,.14)
@@ -131,6 +131,6 @@ sc.render.film_transparent=True
 for obj in list(bpy.data.objects):
  if obj.type=='FONT':
   bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj;bpy.ops.object.convert(target='MESH')
-bpy.ops.export_scene.gltf(filepath=os.path.join(out,'chef_bu.glb'),export_format='GLB',use_selection=False,export_cameras=False,export_lights=False)
+bpy.ops.export_scene.gltf(filepath=os.path.join(out,'chef_bu.glb'),export_format='GLB',use_selection=False,export_cameras=False)
 bpy.ops.render.render(write_still=True)
 print('Created assets/chef_bu.glb and assets/chef_bu_preview.png')
