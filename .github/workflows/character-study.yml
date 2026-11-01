@@ -1,46 +1,21 @@
-name: Character Art Technical Study
+name: Legacy Character Study (Manual Archive)
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'blender/character_study.py'
-      - '.github/workflows/character-study.yml'
 permissions:
-  contents: write
-concurrency:
-  group: character-study-main
-  cancel-in-progress: false
+  contents: read
 jobs:
-  study:
+  archive:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Install Blender dependencies
+      - name: Install Blender
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y blender python3-numpy libegl1 libgl1-mesa-dri libopengl0
-      - name: Render three angles and export model
-        run: |
-          blender -b -t 4 --python blender/character_study.py
-          test -s assets/character_test/front.png
-          test -s assets/character_test/three_quarter.png
-          test -s assets/character_test/side.png
-          test -s assets/character_test/character_study.glb
-      - name: Commit study outputs
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/character_test/
-          if ! git diff --cached --quiet; then
-            git commit -m "Render character study [skip ci]"
-            for attempt in 1 2 3 4 5; do
-              git fetch origin main
-              git rebase origin/main
-              if git push origin HEAD:main; then
-                break
-              fi
-              if [ "$attempt" -eq 5 ]; then exit 1; fi
-              sleep 3
-            done
-          fi
+      - name: Generate legacy assets
+        run: blender -b -t 4 --python blender/character_study.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: legacy-blender-assets
+          path: assets/character_test/

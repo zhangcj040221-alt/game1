@@ -1,28 +1,39 @@
-# 厨师布 · 立体典藏卡
+# 厨师布 · 黄金小厨房
 
-当前目标：先完成一张精美、可拖动、可播放轻量动作的立体卡，再讨论游戏玩法。
+首页已改为精绘分层 **2.5D** 卡面，优先还原用户参考图的美术质量。角色、厨房背景、卡框与前景使用独立透明资产合成，支持视差和有限角度倾斜；它不是可以转到背面的完整 3D 模型。
 
-## 当前可用内容
-- 首页通过 Three.js GLTFLoader 加载仓库现有的 `assets/chef_bu.glb`，不再在浏览器里重搭一套角色。
-- 五档展示、金色粒子、流动金光、中文名牌、拖动查看层次、回正、轻动态开关、金光演出；减少动态效果偏好默认关闭轻动态。
-- 模块、模型加载失败或 WebGL 上下文丢失时显示 `assets/chef_bu_preview.png`。
-- `blender/chef_bu_premium.py` 为新版模型生成来源（旧版脚本保留）；已有 GitHub Actions 可重新导出模型和预览图。
-- 入口：`index.html`；交互和渲染：`viewer.js`。
+## 展示与交互
+
+- 三张独立图层：补全的厨房、透明厨师布（含锅铲/锅/食材）、透明卡框及前景食材。
+- 拖动、鼠标移动、键盘方向键产生不同幅度的分层位移与整体倾斜。双击、Home 或回正按钮可复位。
+- 手机倾斜由用户点击开启；iOS 权限在该操作中请求。未授权或不支持时仍可拖动，回正可重新校准。需 HTTPS 或 localhost。
+- 五档：基础、视差、动态、蒸汽星光、镀闪光泽；升级演出与减少动态偏好均有处理。
+- 图层加载失败显示参考图静态回退，并明确提示；运行时不加载 CDN、Three.js 或 GLB。
 
 ## 运行
-在仓库根目录启动静态 HTTP 服务，例如 `python3 -m http.server 8000`，再打开 http://localhost:8000。
-不要用 file:// 直接打开。部署时保留 index.html、viewer.js 和 assets/ 的相对路径。
 
-## 依赖与复用
-当前本地打包复用 Three.js 0.180.0 的 GLTFLoader、RoomEnvironment 和 PMREMGenerator（MIT，https://github.com/mrdoob/three.js/blob/r180/LICENSE）。
-引擎和附加模块保存在 `vendor/engine.js`，运行时无 CDN 依赖；来源、许可证与复现方式见 `vendor/README.md`。
-此次没有加入 Kenney、Poly Haven 或其他尚未取得的资产。
+在仓库根目录运行 `python3 -m http.server 8000`，打开 http://localhost:8000 。无需构建和运行时依赖。
 
-## 验收边界
-现已重做角色、弧形金框与厨房场景；仍是程序化建模，尚未达到参考图级别的美术精度。金光演出是展示效果，不代表已实现升级玩法。
-已完成 JavaScript 语法检查和引用路径核对；已在云端浏览器成功加载模型及本地引擎；完整拖动测试与手机真机视觉、流畅度验收仍未完成。
-实际完成情况、缺口和恢复入口见 [PROGRESS.md](PROGRESS.md)。
+入口 `index.html`，样式 `card.css`，交互 `viewer.js`；部署时保留 `assets/layers/` 和相对路径。
 
-美术目标、学习来源与验收标准见 [ART_DIRECTION.md](ART_DIRECTION.md)。新版源场景为 `assets/chef_bu_premium.blend`。
+## 验证
 
-最新网页静止帧见 [软萌公仔第四轮实图](assets/review/web-v4.png)；该截图开启减少动态效果，用于检查造型和材质。
+```sh
+npm ci
+npx playwright install chromium
+npm test
+```
+
+测试自行启动静态服务器，以禁用 WebGL 的 Chromium 验证图层视差、鼠标拖动、键盘/回正、五档、模拟传感器授权/拒绝与事件、升级、减少动态、手机布局和失败回退，并输出实际页面截图。真机传感器与 Safari 手感仍需设备验收。CI 保留检查截图，不会自动提交或修改 main。
+
+最新截图：[桌面](assets/review/layered-desktop.png)、[倾斜](assets/review/layered-tilted.png)、[手机](assets/review/layered-mobile.png)。
+
+## 美术资产与历史
+
+`assets/layers/ASSETS.md` 记录新图层来源与合成定位。以用户上传参考图为依据，通过图像工具提取/补绘；它们不是旧 GLB 的渲染图。
+
+旧版模型、Blender 脚本和源场景保留；旧页面为 `legacy-3d.html`，脚本为 `viewer-3d.js`，本地引擎仍在 `vendor/`。旧 Blender 工作流仅供手动生成存档，不自动覆盖首页或 main。
+
+恢复信息见 [PROGRESS.md](PROGRESS.md)，美术目标见 [ART_DIRECTION.md](ART_DIRECTION.md)。
+
+[实际页面拖动与升级演示](assets/review/layered-demo.mp4)。

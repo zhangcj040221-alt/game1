@@ -1,3 +1,7 @@
+# 当前恢复入口：精绘分层卡面
+
+主入口已改为 2.5D。先读 README.md、index.html、card.css、viewer.js、assets/layers/ASSETS.md，再运行 npm test。旧 GLB 只供存档；不要运行旧 Blender 脚本覆盖当前图层。自动 3D 工作流已改为仅手动上传产物，不再推送 main。
+
 # 进度与恢复入口
 
 ## 本次恢复时核实
@@ -69,3 +73,14 @@
 - 新模型仍为 36 网格、23 材质；GLB 约 6 MB，源场景和静态预览同步生成。
 - Blender 渲染、Python/JS 语法与 diff 检查通过。渲染完成后单独执行 Chromium：模型加载、五档切换、升级/回正触发、减少动态及 390px 无溢出通过，无 JS 异常和外部请求。
 - 已目视核对实际网页截图 assets/review/web-v4.png：头部姿态、五官贴合与手部位置正常。手机真机帧率、完整触摸拖动和传感器倾斜仍未验收。
+
+## 路线切换：用户明确同意精绘分层 2.5D
+- 以用户最近上传的黄金卡牌图为参考，通过 image_gen 提取/补绘透明角色、空厨房、透明卡框与前景（本版前景与框合层）。原始生成图保留于会话 generated_images，运行副本在 assets/layers。
+- 主入口重写为纯 HTML/CSS/JS 分层合成，角色定位 -8% / .78，前后层使用独立位移和深度。无 Three.js、GLB、CDN 或 WebGL 运行依赖。
+- 支持鼠标拖动/悬停、触摸拖动、方向键/Home/双击/按钮回正、有限角度倾斜、主动授权的手机传感器、五档、蒸汽/星光/镀闪和升级。减少动态模式简化效果，静止时按需更新。
+- 传感器未授权、不支持或没有数据均保留拖动；图层失败显示明确标注的参考图静态回退。
+- 旧 index/viewer 另存 legacy-3d.html 与 viewer-3d.js，旧模型/源场景保留。旧自动 Blender 流程改为手动归档，避免旧模型自动写 main。新增只读浏览器检查 CI，截图只上传 artifact。
+- tests/card-check.cjs 在禁用 WebGL 的 Chromium 验证实际不同图层的位移、鼠标/键盘回正、五档、模拟权限允许/拒绝与传感器事件、升级、减少动态、390px 无溢出及失败回退；无页面 JS 异常和外部请求。模拟传感器不等于真实手机验收。
+- 已修复扫光图层造成的手机横向溢出。真实网页截图在 assets/review/layered-{desktop,tilted,mobile}.png。真实手机感应、Safari 手感尚未验收。
+- 最终通过项目 npm ci + npm test（使用本机 Chromium 路径）；默认测试截图写 test-results，避免日常测试改动已提交美术截图。JS 语法与 git diff 检查通过。
+- 录制了真实 DOM 页面拖动与升级操作，转为 assets/review/layered-demo.mp4；不是由效果图生成的模拟视频。
