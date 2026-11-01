@@ -29,9 +29,11 @@ try {
   if (failed) throw new Error('Load timed out');
   renderer = new T.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'default' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
   renderer.outputColorSpace = T.SRGBColorSpace;
   renderer.toneMapping = T.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.toneMappingExposure = .95;
   renderer.domElement.setAttribute('aria-label', '厨师布立体卡');
   renderer.domElement.hidden = true;
   stage.prepend(renderer.domElement);
@@ -45,12 +47,18 @@ try {
   const room = new RoomEnvironment();
   const env = pmrem.fromScene(room, .04);
   scene.environment = env.texture;
+  scene.environmentIntensity = .65;
   room.dispose();
   pmrem.dispose();
-  scene.add(new T.HemisphereLight(0xffefd9, 0x51405a, 1.2));
-  const key = new T.DirectionalLight(0xffddae, 2.5);
-  key.position.set(-3, 5, 8); scene.add(key);
-  const fill = new T.DirectionalLight(0xcbd9ff, 1.0);
+  scene.add(new T.HemisphereLight(0xffefd9, 0x302039, .65));
+  const key = new T.DirectionalLight(0xffcf8c, 3.0);
+  key.position.set(-3, 5, 8);
+  key.castShadow = true;
+  key.shadow.mapSize.set(512, 512);
+  Object.assign(key.shadow.camera, { left: -4, right: 4, top: 5, bottom: -5, near: .1, far: 24 });
+  key.shadow.normalBias = .025; key.shadow.bias = -.0001;
+  scene.add(key);
+  const fill = new T.DirectionalLight(0xaac5ff, .85);
   fill.position.set(4, 1, 5); scene.add(fill);
   const gltf = await new GLTFLoader().loadAsync('./assets/chef_bu.glb');
   if (failed) { renderer.dispose(); throw new Error('Load timed out'); }
@@ -59,7 +67,7 @@ try {
   // Blender XY card with +Z front -> glTF XZ card -> upright XY card.
   model.rotation.x = Math.PI / 2;
   // Exported scene lights must not compete with the viewer lighting.
-  model.traverse(object => { if (object.isLight || object.isCamera) object.visible = false; });
+  model.traverse(object => { if (object.isLight || object.isCamera) object.visible = false; if (object.isMesh) { object.castShadow = /Face|sleeve|paw|coat|hat|foot|Wok|tomato|Scarf|body|ear|Caramel|cotton|iron|scarf|vinyl/i.test(object.name); object.receiveShadow = true; } });
   model.updateMatrixWorld(true);
   const bounds = new T.Box3().setFromObject(model);
   if (bounds.isEmpty()) throw new Error('Empty model');
@@ -67,8 +75,10 @@ try {
   model.position.sub(center);
   card.add(model); scene.add(card);
   const size = bounds.getSize(new T.Vector3());
+  let dirty = true;
   // Depth contributes to framing when the card is tilted.
   function resize() {
+    dirty = true;
     const width = Math.max(stage.clientWidth, 1), height = Math.max(stage.clientHeight, 1);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
@@ -92,21 +102,8 @@ try {
   card.add(sparkles);
   const glow = new T.PointLight(0xffbb55, 0, 18, 2);
   glow.position.set(2, 0, 4); card.add(glow);
-  // A native canvas label stays sharp without a remote font dependency.
-  const labelCanvas = document.createElement('canvas');
-  labelCanvas.width = 1024; labelCanvas.height = 180;
-  const ctx = labelCanvas.getContext('2d');
-  ctx.fillStyle = '#f3dbac'; ctx.fillRect(0, 0, 1024, 180);
-  ctx.strokeStyle = '#a66d24'; ctx.lineWidth = 10; ctx.strokeRect(8, 8, 1008, 164);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#653314'; ctx.font = 'bold 100px system-ui, sans-serif';
-  ctx.fillText('厨师布', 512, 94);
-  const labelTexture = new T.CanvasTexture(labelCanvas); labelTexture.colorSpace = T.SRGBColorSpace;
-  const label = new T.Mesh(new T.PlaneGeometry(4.86, .62), new T.MeshBasicMaterial({ map: labelTexture }));
-  label.position.set(0, -2.72 - center.y, 1.32 - center.z);
-  card.add(label);
   function selectLevel(next) {
-    level = next;
+    level = next; dirty = true;
     for (const button of levels) button.setAttribute('aria-pressed', String(Number(button.dataset.level) === level));
     if (level === 1) { tx = ty = 0; }
     status.textContent = ['基础卡 · 正面静态展示', '立体卡 · 拖动查看模型层次', '动态卡 · 食材轻盈浮动', '特效卡 · 金色粒子环绕', '镀闪卡 · 流动金光与粒子'][level - 1];
@@ -117,6 +114,7 @@ try {
     if (/Flying.ingredient/i.test(object.name)) food.push({ object, base: object.position.clone(), phase: food.length * .7 });
   });
   function updateMotion() {
+    dirty = true;
     motionButton.textContent = '轻动态：' + (motion ? '开' : '关');
     motionButton.setAttribute('aria-pressed', String(motion));
   }
@@ -131,6 +129,7 @@ try {
   });
   stage.addEventListener('pointermove', event => {
     if (!dragging || event.pointerId !== pointerId) return;
+    dirty = true;
     tx = T.MathUtils.clamp(startRX + (event.clientX - startX) / stage.clientWidth * 1.8, -.65, .65);
     ty = T.MathUtils.clamp(startRY + (event.clientY - startY) / stage.clientHeight * .9, -.28, .28);
   });
@@ -138,7 +137,7 @@ try {
   stage.addEventListener('pointerup', release);
   stage.addEventListener('pointercancel', release);
   stage.addEventListener('lostpointercapture', release);
-  front.onclick = () => { release(); tx = ty = 0; };
+  front.onclick = () => { release(); tx = ty = 0; dirty = true; };
   upgrade.onclick = () => {
     if (reducedMotion.matches) { status.textContent = '已开启减少动态效果，金光演出已简化。'; return; }
     selectLevel(5); burst = 1.8; stage.classList.remove('burst');
@@ -150,7 +149,14 @@ try {
   for (const button of [front, motionButton, upgrade, ...levels]) button.disabled = false;
   updateMotion();
   selectLevel(5);
+  let frameAt = 0;
   renderer.setAnimationLoop(now => {
+    if (now - frameAt < (reducedMotion.matches ? 500 : 1000 / 30)) return;
+    frameAt = now;
+    const activeEffects = !reducedMotion.matches && ((motion && level >= 3) || level >= 4 || burst > 0);
+    const rotating = Math.abs(card.rotation.y - tx) + Math.abs(card.rotation.x - ty) > .0001;
+    if (!dirty && !activeEffects && !rotating) return;
+    dirty = false;
     if (document.hidden) { last = now; return; }
     const dt = last ? Math.min((now - last) / 1000, .05) : 0; last = now;
     if (!reducedMotion.matches) time += dt;
@@ -174,7 +180,7 @@ try {
     glow.intensity = level === 5 && !reducedMotion.matches ? 7 + Math.sin(time * 1.5) * 4 : 0;
     glow.position.x = Math.sin(time * .7) * 3;
     glow.position.y = Math.cos(time * .7) * 3;
-    renderer.toneMappingExposure = 1.1 + Math.sin(burst / 1.8 * Math.PI) * .5;
+    renderer.toneMappingExposure = .95 + Math.sin(burst / 1.8 * Math.PI) * .5;
     if (burst > 0) card.rotation.y += Math.sin(burst / 1.8 * Math.PI) * dt * .9;
     renderer.render(scene, camera);
   });
