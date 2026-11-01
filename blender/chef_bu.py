@@ -11,7 +11,8 @@ out=os.path.join(root,"assets");os.makedirs(out,exist_ok=True)
 def mat(name,color,metal=0,rough=.5,subsurface=0):
  m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True
  p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=metal;p.inputs['Roughness'].default_value=rough
- sub=p.inputs.get('Subsurface Weight') or p.inputs.get('Subsurface');\n if sub: sub.default_value=subsurface
+ sub=p.inputs.get('Subsurface Weight') or p.inputs.get('Subsurface')
+ if sub: sub.default_value=subsurface
  return m
 gold=mat('Champagne gold',(.8,.43,.09),.82,.18)
 rim=mat('Gold edge highlight',(1,.77,.34),.72,.14)
