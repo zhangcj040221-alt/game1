@@ -13,12 +13,13 @@ gold=mat('Honey gold',(.72,.33,.055),.82,.23)
 edge=mat('Champagne edge',(1,.71,.27),.72,.17)
 opal=mat('Pearlescent lavender',(.51,.43,.66),.68,.23)
 ivory=mat('Banner warm enamel',(.96,.78,.43),.15,.32)
-fur=mat('Caramel vinyl',(.62,.265,.105),0,.48)
+fur=mat('Caramel vinyl',(.59,.245,.09),0,.57)
 inner=mat('Ear cocoa',(.27,.095,.038),0,.55)
 yellow=mat('Golden cheeks',(1,.57,.04),0,.46)
 ink=mat('Espresso face',(.055,.016,.008),0,.38)
 pink=mat('Tongue',(.97,.19,.19),0,.42)
-white=mat('Warm chef cotton',(.92,.88,.78),0,.48)
+white=mat('Warm chef cotton',(.88,.86,.80),0,.64)
+white.node_tree.nodes.get('Principled BSDF').inputs['Sheen Weight'].default_value=.18
 red=mat('Tomato red scarf',(.68,.027,.014),0,.38)
 pan=mat('Black seasoned iron',(.036,.043,.061),.58,.3)
 wood=mat('Walnut',(.18,.064,.025),0,.6)
@@ -64,8 +65,29 @@ verts=[(x,y,-.48) for x,y in outline]+[(x,y,-.2) for x,y in outline]
 n=len(outline);faces=[tuple(range(n-1,-1,-1)),tuple(range(n,n*2))]+[(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
 mesh=bpy.data.meshes.new('Shaped backing');mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new('Shaped card backing',mesh);bpy.context.collection.objects.link(o);o.data.materials.append(gold)
 box('Recessed kitchen',(0,0,-.08),(4.97,6.46,.25),wall,.35)
-for scale,z,r,m,name in [(1,.0,.16,edge,'Outer gold rolled edge'),(.965,.08,.125,opal,'Lavender inlay'),(.925,.16,.10,gold,'Inner gold bevel'),(.905,.23,.035,edge,'Fine inner bright line')]:
- tube(name,[(x*scale,y*scale,z) for x,y in outline],r,m,True)
+# Broad sculpted metal cross-section, rather than stacked round pipes.
+def contour_samples(points,steps=12):
+ out=[];n=len(points)
+ for i in range(n):
+  p0,p1,p2,p3=[Vector(points[j%n]) for j in (i-1,i,i+1,i+2)]
+  for k in range(steps):
+   t=k/steps;t2=t*t;t3=t2*t
+   out.append((p1*2+(p2-p0)*t+(p0*2-p1*5+p2*4-p3)*t2+(-p0+p1*3-p2*3+p3)*t3)*.5)
+ return out
+contour=contour_samples(outline)
+profiles=[(1.025,-.12),(1.025,.03),(1.01,.13),(.993,.18),(.975,.12),(.952,.10),(.935,.17),(.916,.25),(.895,.22),(.89,.06)]
+vs=[(p.x*scale,p.y*scale,z) for scale,z in profiles for p in contour]
+N=len(contour);fs=[]
+for j in range(len(profiles)-1):
+ for i in range(N):fs.append((j*N+i,j*N+(i+1)%N,(j+1)*N+(i+1)%N,(j+1)*N+i))
+me=bpy.data.meshes.new('Faceted jewellery cross section');me.from_pydata(vs,[],fs);me.update()
+o=bpy.data.objects.new('Sculpted broad gold and opal frame',me);bpy.context.collection.objects.link(o)
+for m in (gold,edge,opal):o.data.materials.append(m)
+for polygon in me.polygons:
+ band=polygon.index//N;polygon.material_index=2 if band in (3,4,5) else (1 if band in (1,2,6) else 0)
+ polygon.use_smooth=True
+# The slim beads emphasize the broad bevel rather than replacing it.
+for scale,z in [(1.01,.145),(.913,.26)]:tube('Fine frame fillet',[(p.x*scale,p.y*scale,z) for p in contour[::6]],.018,edge,True)
 # Kitchen: warm side window, tiles, shelves and cookware.
 window=mat('Window warm light',(1,.64,.21),0,.5)
 p=window.node_tree.nodes.get('Principled BSDF');p.inputs['Emission Color'].default_value=(1,.58,.17,1);p.inputs['Emission Strength'].default_value=2
@@ -86,12 +108,16 @@ box('Counter',(0,-2.05,.42),(4.7,.18,1.2),wood,.05)
 # Trailing foliage, each leaf has a crease and visible tapered silhouette.
 def leaf(name,loc,size,m,angle=0):
  x,y,z=loc
- coords=[(0,-.52,0),(-.29,-.13,.02),(-.32,.18,0),(0,.53,-.015),(.32,.18,0),(.29,-.13,.02),(0,0,.11)]
- vs=[]
- for a,b,c in coords:vs.append((x+size*(a*math.cos(angle)-b*math.sin(angle)),y+size*(a*math.sin(angle)+b*math.cos(angle)),z+size*c))
- me=bpy.data.meshes.new(name);me.from_pydata(vs,[],[(i,(i+1)%6,6) for i in range(6)]);me.update();o=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(o);o.data.materials.append(m)
- so=o.modifiers.new('Leaf thickness','SOLIDIFY');so.thickness=.014
- be=o.modifiers.new('Leaf softness','BEVEL');be.width=.03;be.segments=2;return smooth(o)
+ vs=[];nu=12;nv=6
+ for i in range(nu+1):
+  v=i/nu;length=v-.5;width=.31*math.sin(math.pi*v)**.8
+  for j in range(nv+1):
+   u=j/nv*2-1;a=u*width;b=length;c=.10*(1-u*u)*math.sin(math.pi*v)
+   vs.append((x+size*(a*math.cos(angle)-b*math.sin(angle)),y+size*(a*math.sin(angle)+b*math.cos(angle)),z+size*c))
+ fs=[(i*(nv+1)+j,i*(nv+1)+j+1,(i+1)*(nv+1)+j+1,(i+1)*(nv+1)+j) for i in range(nu) for j in range(nv)]
+ me=bpy.data.meshes.new(name);me.from_pydata(vs,[],fs);me.update();o=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(o);o.data.materials.append(m)
+ so=o.modifiers.new('Leaf thickness','SOLIDIFY');so.thickness=.012
+ smooth(o);return o
 tube('Trailing vine',[(-2.3,3.0,.43),(-1.65,2.8,.55),(-1.9,2.1,.52),(-2.15,1.55,.5),(-2.0,.9,.49)],.022,green)
 for x,y,s,a in [(-2.05,2.75,.8,-.7),(-1.47,2.6,.64,.6),(-1.85,2.05,.6,-.5),(-2.2,1.57,.53,.8),(-1.97,1.0,.42,-.5)]:leaf('Basil leaf',(x,y,.63),s,lime,a)
 # Character: a broad face, tiny torso, deliberate asymmetry in the cooking pose.
@@ -101,7 +127,17 @@ for x in (-1.13,1.13):
  uv('Round bear ear',(x,1.38,1.02),(.36,.37,.22),fur)
  uv('Ear inner',(x,1.40,1.225),(.22,.23,.045),inner)
 for x in (-.48,.48):uv('Espresso eye',(x,.65,1.892),(.105,.125,.043),ink)
-for x in (-.91,.91):uv('Golden cheek',(x,.25,1.83),(.255,.245,.035),yellow)
+# Blush follows the ellipsoid surface, with no button-like protrusion.
+for cx in (-.91,.91):
+ vs=[];nr=6;ns=40
+ for j in range(nr+1):
+  r=j/nr
+  for i in range(ns):
+   a=i*math.tau/ns;x=cx+.25*r*math.cos(a);y=.25+.235*r*math.sin(a)
+   z=1.19+.73*math.sqrt(max(.001,1-(x/1.39)**2-((y-.60)/1.15)**2))+.006
+   vs.append((x,y,z))
+ fs=[(j*ns+i,j*ns+(i+1)%ns,(j+1)*ns+(i+1)%ns,(j+1)*ns+i) for j in range(nr) for i in range(ns)]
+ me=bpy.data.meshes.new('Surface blush');me.from_pydata(vs,[],fs);me.update();o=bpy.data.objects.new('Golden cheek surface',me);bpy.context.collection.objects.link(o);o.data.materials.append(yellow);smooth(o)
 # The original mascot has a W smile and pink tongue, not an O mouth.
 uv('Smile open',(0,.29,1.928),(.135,.18,.025),ink)
 uv('Pink tongue',(0,.255,1.956),(.086,.12,.012),pink)
@@ -178,11 +214,29 @@ font=bpy.data.fonts.load('/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc')
 def text(name,body,loc,size,m):
  c=bpy.data.curves.new(name,'FONT');c.body=body;c.font=font;c.size=size;c.align_x='CENTER';c.align_y='CENTER';c.extrude=.012;c.bevel_depth=.003
  o=bpy.data.objects.new(name,c);bpy.context.collection.objects.link(o);o.location=loc;o.data.materials.append(m);return o
-box('Raised bowed nameplate',(0,-2.67,1.33),(4.78,.85,.19),gold,.23)
-box('Cream ribbon enamel',(0,-2.66,1.45),(4.54,.67,.09),ivory,.17)
-text('Chef Bu name','厨师布',(0,-2.66,1.515),1.80,inner)
+# An arched enamel scroll with broad folded ends.
+def ribbon(name,halfwidth,center_y,depth,width,m):
+ vs=[];nu=48;nv=6
+ for i in range(nu+1):
+  u=i/nu*2-1;x=u*halfwidth;cy=center_y+.22*(1-u*u);z=depth+.15*(1-u*u)
+  for j in range(nv+1):
+   v=j/nv*2-1;vs.append((x,cy+width*.5*v,z-.035*v*v))
+ fs=[(i*(nv+1)+j,(i+1)*(nv+1)+j,(i+1)*(nv+1)+j+1,i*(nv+1)+j+1) for i in range(nu) for j in range(nv)]
+ me=bpy.data.meshes.new(name);me.from_pydata(vs,[],fs);me.update();o=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(o);o.data.materials.append(m)
+ solid=o.modifiers.new('Enamel scroll thickness','SOLIDIFY');solid.thickness=.055
+ bevel=o.modifiers.new('Polished scroll edges','BEVEL');bevel.width=.025;bevel.segments=3;smooth(o)
+ribbon('Gold ribbon surround',2.4,-2.68,1.42,.9,gold)
+ribbon('Curved cream ribbon',2.34,-2.68,1.48,.75,ivory)
+for i,char in enumerate('厨师布'):
+ x=(i-1)*.70;u=x/2.34
+ o=text('Chef Bu ribbon letter '+str(i),char,(x,-2.68+.22*(1-u*u),1.53+.15*(1-u*u)),1.90,inner)
+ o.rotation_euler[2]=math.atan(-.44*x/(2.34**2))
 for side in (-1,1):
- tube('Ribbon folded tail',[(side*1.87,-2.6,.99),(side*2.48,-2.78,.94),(side*2.2,-3.15,.98),(side*1.77,-3.03,1.15)],.13,gold)
+ pts=[(side*1.95,-2.65,1.25),(side*2.78,-2.48,.98),(side*2.52,-2.91,1.0),(side*2.72,-3.12,1.0),(side*2.14,-3.0,1.2)]
+ me=bpy.data.meshes.new('Ribbon tail');me.from_pydata(pts,[],[tuple(range(5))]);me.update();o=bpy.data.objects.new('Broad folded ribbon tail',me);bpy.context.collection.objects.link(o);o.data.materials.append(ivory)
+ so=o.modifiers.new('Ribbon thickness','SOLIDIFY');so.thickness=.08
+ be=o.modifiers.new('Rounded ribbon edge','BEVEL');be.width=.055;be.segments=4
+ tube('Ribbon gold stitched edge',pts,.028,gold,True)
 for x,r in [(-.67,.26),(0,.34),(.67,.26)]:star('Five point award star',x,-3.34,.5,r,edge)
 # Four-lobed chef crest on top, and a tiny sculpted chef hat.
 crest=[(0,4.02),(-.4,3.91),(-.62,3.57),(-.45,3.23),(0,2.91),(.45,3.23),(.62,3.57),(.4,3.91)]
@@ -201,12 +255,26 @@ area('Warm softbox',(-4,4,6),650,(1,.70,.39),4)
 area('Cool fill',(4,1,4),340,(.57,.71,1),3)
 area('Golden rim',(-3,2,1),850,(1,.53,.12),2)
 area('Top jewellery strip',(0,6,2.5),600,(1,.85,.57),2)
+# Unite the garment and hat volumes to remove visible construction joints.
+def sculpt_union(names,name,voxel=.035):
+ bpy.ops.object.select_all(action='DESELECT')
+ objects=[o for o in bpy.context.scene.objects if any(o.name.startswith(n) for n in names)]
+ for o in objects:o.select_set(True)
+ bpy.context.view_layer.objects.active=objects[0]
+ bpy.ops.object.convert(target='MESH');bpy.ops.object.join();o=bpy.context.object;o.name=name
+ bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+ rem=o.modifiers.new('Sculpted volume union','REMESH');rem.mode='VOXEL';rem.voxel_size=voxel;rem.use_smooth_shade=True
+ bpy.ops.object.modifier_apply(modifier=rem.name)
+ mod=o.modifiers.new('Soft sculpt finish','SMOOTH');mod.factor=.65;mod.iterations=5
+ bpy.ops.object.modifier_apply(modifier=mod.name);smooth(o)
+sculpt_union(['Chef hat band','Hat crown'],'Sculpted chef hat')
+sculpt_union(['Compact jacket body','Flared chef coat','Raised left sleeve','Right sleeve'],'Sculpted chef cotton')
 # Curves/text must become mesh for a portable glTF asset.
 for obj in list(bpy.context.scene.objects):
  if obj.type in {'CURVE','FONT'}:
   bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj;bpy.ops.object.convert(target='MESH')
 bpy.ops.object.camera_add(location=(.1,.1,17.8));cam=bpy.context.object;cam.rotation_euler=(0,0,0);cam.data.type='ORTHO';cam.data.ortho_scale=9.7
-sc=bpy.context.scene;sc.camera=cam;sc.render.engine='CYCLES';sc.cycles.samples=96;sc.cycles.use_denoising=False;sc.render.threads_mode='FIXED';sc.render.threads=6
+sc=bpy.context.scene;sc.camera=cam;sc.render.engine='CYCLES';sc.cycles.samples=80;sc.cycles.use_denoising=False;sc.render.threads_mode='FIXED';sc.render.threads=6
 sc.view_settings.view_transform='AgX';sc.render.resolution_x=750;sc.render.resolution_y=1000;sc.render.resolution_percentage=100;sc.render.film_transparent=True;sc.render.image_settings.file_format='PNG';sc.render.filepath=os.path.join(OUT,'chef_bu_preview.png')
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'chef_bu_premium.blend'))
 import sys

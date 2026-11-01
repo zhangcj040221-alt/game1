@@ -24,3 +24,5 @@
 实际完成情况、缺口和恢复入口见 [PROGRESS.md](PROGRESS.md)。
 
 美术目标、学习来源与验收标准见 [ART_DIRECTION.md](ART_DIRECTION.md)。新版源场景为 `assets/chef_bu_premium.blend`。
+
+最新网页静止帧见 [第三轮实图](assets/review/web-v3.png)；该截图开启减少动态效果，用于检查造型和材质。

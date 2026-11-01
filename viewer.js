@@ -67,7 +67,7 @@ try {
   // Blender XY card with +Z front -> glTF XZ card -> upright XY card.
   model.rotation.x = Math.PI / 2;
   // Exported scene lights must not compete with the viewer lighting.
-  model.traverse(object => { if (object.isLight || object.isCamera) object.visible = false; if (object.isMesh) { object.castShadow = /Face|sleeve|paw|coat|hat|foot|Wok|tomato|Scarf|body|ear|Caramel|cotton|iron|scarf|vinyl/i.test(object.name); object.receiveShadow = true; } });
+  model.traverse(object => { if (object.isLight || object.isCamera) object.visible = false; if (object.isMesh) { object.castShadow = /Face|sleeve|paw|coat|hat|foot|Wok|tomato|Scarf|body|ear|Caramel|cotton|iron|scarf|vinyl/i.test(object.name); object.receiveShadow = !/Golden.cheeks/i.test(object.name); } });
   model.updateMatrixWorld(true);
   const bounds = new T.Box3().setFromObject(model);
   if (bounds.isEmpty()) throw new Error('Empty model');
