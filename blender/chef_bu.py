@@ -123,7 +123,7 @@ area('Soft fill',(3,1,6),600,(.76,.81,1),5)
 area('Golden rim',(1,5,-2),950,(1,.59,.25),3)
 bpy.ops.object.camera_add(location=(0,-.4,15));cam=bpy.context.object;cam.rotation_euler=(Vector((0,0,0))-cam.location).to_track_quat('-Z','Y').to_euler()
 bpy.context.scene.camera=cam;cam.data.type='ORTHO';cam.data.ortho_scale=10.1
-sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=32
+sc=bpy.context.scene;sc.render.engine='BLENDER_EEVEE_NEXT'
 sc.render.resolution_x=900;sc.render.resolution_y=1200;sc.render.resolution_percentage=100
 sc.render.image_settings.file_format='PNG';sc.render.filepath=os.path.join(out,'chef_bu_preview.png')
 sc.camera.data.lens=50
