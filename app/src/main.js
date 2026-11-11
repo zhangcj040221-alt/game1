@@ -22,7 +22,7 @@ function skyTexture() {return canvasTexture(1024,1536,(c,w,h)=>{
  c.strokeStyle='#b6c8e414';c.lineWidth=1;c.beginPath();c.ellipse(520,650,390,490,-.2,0,Math.PI*2);c.stroke();
  c.strokeStyle='#dbc39388';c.lineWidth=2;c.strokeRect(35,35,w-70,h-70);c.strokeStyle='#dbc39330';c.strokeRect(47,47,w-94,h-94);
  c.textAlign='center';c.fillStyle='#d9cca9';c.font='16px serif';c.fillText('YI-ER  &  BU-BU',512,105);star(c,512,146,7);
- c.fillStyle='#f0e4c8';c.font='48px "Songti SC", "Noto Serif CJK SC", serif';c.fillText('一起看星星',512,1358);c.fillStyle='#bdc6d4';c.font='15px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,1403);
+ c.fillStyle='#f0e4c8';c.font='48px "Songti SC", "Noto Serif CJK SC", "Card CJK", serif';c.fillText('一起看星星',512,1358);c.fillStyle='#bdc6d4';c.font='15px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,1403);
  c.font='13px serif';c.fillStyle='#b6a882';c.fillText('STARRY MOMENTS    /    NO. 001',512,1470);
 });}
 function groundTexture(front=false) {return canvasTexture(1024,520,(c,w,h)=>{
@@ -67,6 +67,7 @@ function frame(now){requestAnimationFrame(frame);if(!ready)return;const dt=Math.
  foil.uniforms.strength.value=opts.foil?1:0;renderer.render(scene,camera);
 }
 async function init(){
+ await document.fonts.load('16px "Card CJK"');
  try { renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'}); } catch { renderer=new CanvasFallback(); const tag=document.createElement('small');tag.className='fallback-note';tag.textContent='兼容预览 · WebGL 不可用';stage.append(tag); }renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;stage.append(renderer.domElement);scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(37,1,.1,100);camera.position.set(0,0,8.6);
  card=new THREE.Group();scene.add(card);scene.add(new THREE.AmbientLight('#d1ddff',2));const light=new THREE.DirectionalLight('#ffe6b6',4);light.position.set(-3,4,6);scene.add(light);
  const edge=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(3.38,5.06,.17),{depth:.06,bevelEnabled:true,bevelThickness:.025,bevelSize:.025,bevelSegments:3,steps:1}),new THREE.MeshStandardMaterial({color:'#8b805f',metalness:.75,roughness:.36}));edge.position.z=-.12;card.add(edge);
@@ -77,7 +78,7 @@ async function init(){
  layer(3.06,1.42,groundTexture(false),0,-1.04,.18);
  await Promise.all([character('yier',-.60,0),character('bubu',.60,2.6)]);
  layer(3.06,.45,groundTexture(true),0,-1.49,.60);
- const caption=canvasTexture(1024,250,(c,w,h)=>{const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1c304a');g.addColorStop(1,'#19263e');c.fillStyle=g;c.fillRect(0,0,w,h);c.fillStyle='#b5a476';c.fillRect(0,0,w,2);c.textAlign='center';c.fillStyle='#f0e4c8';c.font='45px "Songti SC", "Noto Serif CJK SC", serif';c.fillText('一起看星星',512,92);c.fillStyle='#aebaca';c.font='14px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,137);c.fillStyle='#ad9d7d';c.font='12px serif';c.fillText('STARRY MOMENTS    /    NO. 001',512,204);});layer(2.92,.66,caption,0,-1.94,.72);
+ const caption=canvasTexture(1024,250,(c,w,h)=>{const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1c304a');g.addColorStop(1,'#19263e');c.fillStyle=g;c.fillRect(0,0,w,h);c.fillStyle='#b5a476';c.fillRect(0,0,w,2);c.textAlign='center';c.fillStyle='#f0e4c8';c.font='45px "Songti SC", "Noto Serif CJK SC", "Card CJK", serif';c.fillText('一起看星星',512,92);c.fillStyle='#aebaca';c.font='14px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,137);c.fillStyle='#ad9d7d';c.font='12px serif';c.fillText('STARRY MOMENTS    /    NO. 001',512,204);});layer(2.92,.66,caption,0,-1.94,.72);
  dust=makeDust();foil=makeFoil();const geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);const line=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#fff1bf',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));card.add(line);shooting={line,age:4,last:0};
  resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,renderer:renderer.isFallback?'canvas-fallback':'webgl'}),wish};
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();message('画面暂时中断，请刷新页面恢复星空');});
