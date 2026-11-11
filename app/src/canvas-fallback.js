@@ -20,6 +20,6 @@ export class CanvasFallback {
   }
  }
  triangle(ctx,img,s,d){const [s0,s1,s2]=s,[d0,d1,d2]=d;const sx1=s1[0]-s0[0],sy1=s1[1]-s0[1],sx2=s2[0]-s0[0],sy2=s2[1]-s0[1],det=sx1*sy2-sx2*sy1;if(Math.abs(det)<1e-5)return;const dx1=d1[0]-d0[0],dy1=d1[1]-d0[1],dx2=d2[0]-d0[0],dy2=d2[1]-d0[1];const a=(dx1*sy2-dx2*sy1)/det,b=(dy1*sy2-dy2*sy1)/det,c=(dx2*sx1-dx1*sx2)/det,e=(dy2*sx1-dy1*sx2)/det;
-  ctx.save();ctx.beginPath();ctx.moveTo(...d0);ctx.lineTo(...d1);ctx.lineTo(...d2);ctx.closePath();ctx.clip();ctx.transform(a,b,c,e,d0[0]-a*s0[0]-c*s0[1],d0[1]-b*s0[0]-e*s0[1]);ctx.drawImage(img,0,0);ctx.restore();
+  const center=[(d0[0]+d1[0]+d2[0])/3,(d0[1]+d1[1]+d2[1])/3];const expanded=[d0,d1,d2].map(p=>{const dx=p[0]-center[0],dy=p[1]-center[1],len=Math.hypot(dx,dy);return [p[0]+dx/len*.35,p[1]+dy/len*.35];});ctx.save();ctx.beginPath();expanded.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.clip();ctx.transform(a,b,c,e,d0[0]-a*s0[0]-c*s0[1],d0[1]-b*s0[0]-e*s0[1]);ctx.drawImage(img,0,0);ctx.restore();
  }
 }
