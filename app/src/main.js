@@ -42,13 +42,18 @@ async function character(name,x,phase) {
  const head=new THREE.Group();root.add(head);head.position.y=(130-cy)*.009;
  const isHead=id=>yi?/^(07_|08_|09_|10_|11_|14_)/.test(id):/^(01_|02_|03_|04_|08_|09_|10_|11_|14_)/.test(id);
  const eyes=id=>/^(12_|13_)/.test(id);const body=id=>!isHead(id)&&!eyes(id);
- async function part(predicate,bounds,parent,originY,z){const tex=await svgTexture(doc,predicate,bounds);const mesh=new THREE.Mesh(new THREE.PlaneGeometry(bounds[2]*.009,bounds[3]*.009),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));mesh.position.set((bounds[0]+bounds[2]/2-cx)*.009,(originY-bounds[1]-bounds[3]/2)*.009,z);parent.add(mesh);return mesh;}
+ async function part(predicate,bounds,parent,originY,z){const tex=await svgTexture(doc,predicate,bounds);const mesh=new THREE.Mesh(new THREE.PlaneGeometry(bounds[2]*.009,bounds[3]*.009),new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.025,depthWrite:true}));mesh.position.set((bounds[0]+bounds[2]/2-cx)*.009,(originY-bounds[1]-bounds[3]/2)*.009,z);parent.add(mesh);return mesh;}
  await part(body,[0,140,205,100],root,130,0);
  await part(isHead,[0,15,205,150],head,cy,.012);
  const eyeY=yi?113.5:109.5;const eyeGroup=new THREE.Group();eyeGroup.position.y=(cy-eyeY)*.009+.018;head.add(eyeGroup);
  await part(eyes,[cx-45,eyeY-9,90,18],eyeGroup,eyeY,.025);
- root.rotation.z=yi?-.035:.035;characters.push({root,head,eyeGroup,phase,baseY:root.position.y,baseRot:root.rotation.z});
+ root.rotation.z=yi?-.035:.035;characters.push({root,head,eyeGroup,phase,eyeOffsets:(yi?[69.9,130.92]:[51.4,112.42]).map(x=>(x-cx)*.009),baseY:root.position.y,baseRot:root.rotation.z});
  return root;
+}
+function eyeSamples(){
+ if(renderer.isFallback)return [];
+ renderer.render(scene,camera);const gl=renderer.getContext();const size=renderer.getDrawingBufferSize(new THREE.Vector2());
+ return characters.flatMap(c=>c.eyeOffsets.map(x=>{const point=c.eyeGroup.localToWorld(new THREE.Vector3(x,0,.025)).project(camera);const pixel=new Uint8Array(4);gl.readPixels(Math.round((point.x*.5+.5)*size.x),Math.round((point.y*.5+.5)*size.y),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);return [...pixel];}));
 }
 function makeDust(){const geo=new THREE.BufferGeometry(),pos=[],seeds=[];for(let i=0;i<48;i++){pos.push((random()-.5)*2.8,-1.05+random()*2.7,.25+random()*.45);seeds.push(random()*10);}geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
  const tex=canvasTexture(64,64,c=>{const g=c.createRadialGradient(32,32,0,32,32,30);g.addColorStop(0,'#fff3cd');g.addColorStop(.15,'#e5d5a4aa');g.addColorStop(1,'#e5d5a400');c.fillStyle=g;c.fillRect(0,0,64,64);});
@@ -80,7 +85,7 @@ async function init(){
  layer(3.06,.45,groundTexture(true),0,-1.49,.60);
  const caption=canvasTexture(1024,250,(c,w,h)=>{const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1c304a');g.addColorStop(1,'#19263e');c.fillStyle=g;c.fillRect(0,0,w,h);c.fillStyle='#b5a476';c.fillRect(0,0,w,2);c.textAlign='center';c.fillStyle='#f0e4c8';c.font='45px "Songti SC", "Noto Serif CJK SC", "Card CJK", serif';c.fillText('一起看星星',512,92);c.fillStyle='#aebaca';c.font='14px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,137);c.fillStyle='#ad9d7d';c.font='12px serif';c.fillText('STARRY MOMENTS    /    NO. 001',512,204);});layer(2.92,.66,caption,0,-1.94,.72);
  dust=makeDust();foil=makeFoil();const geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);const line=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#fff1bf',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));card.add(line);shooting={line,age:4,last:0};
- resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,renderer:renderer.isFallback?'canvas-fallback':'webgl'}),wish};
+ resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,renderer:renderer.isFallback?'canvas-fallback':'webgl'}),...(new URLSearchParams(location.search).has('qa')?{eyeSamples}:{}),wish};
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();message('画面暂时中断，请刷新页面恢复星空');});
  let down=null,moved=false;const ray=new THREE.Raycaster();
  stage.addEventListener('pointerdown',e=>{const r=stage.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);if(!ray.intersectObject(cast).length)return;down={x:e.clientX,y:e.clientY,id:e.pointerId};moved=false;stage.setPointerCapture(e.pointerId);});
