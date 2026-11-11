@@ -1,0 +1,17 @@
+import { test, expect } from '@playwright/test';
+for (const viewport of [{width:1365,height:900},{width:390,height:844}]) {
+ test(`card interaction ${viewport.width}`,async({page})=>{
+  await page.setViewportSize(viewport);const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');
+  await page.waitForFunction(()=>window.__card?.getState().ready);
+  expect(await page.evaluate(()=>window.__card.getState().renderer)).toBe('webgl');
+  expect(await page.evaluate(()=>window.__card.getState().characters)).toBe(2);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  const box=await page.locator('#stage').boundingBox();const x=box.x+box.width/2,y=box.y+box.height/2;
+  await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+55,y+25,{steps:8});await page.waitForTimeout(200);
+  expect(Math.abs((await page.evaluate(()=>window.__card.getState().angle))[1])).toBeGreaterThan(.02);await page.mouse.up();
+  for(const id of ['motion','depth','particles','foil']){await page.locator('#'+id).uncheck();expect((await page.evaluate(()=>window.__card.getState().options))[id]).toBe(false);await page.locator('#'+id).check();}
+  await page.locator('#pause').click();const t=await page.evaluate(()=>window.__card.getState().time);await page.waitForTimeout(150);expect(await page.evaluate(()=>window.__card.getState().time)).toBe(t);await page.locator('#pause').click();
+  await page.locator('#wish').click();await expect(page.locator('#message')).toHaveClass('show');
+  await page.screenshot({path:`test-results/card-${viewport.width}.png`,fullPage:true});expect(errors).toEqual([]);
+ });
+}
