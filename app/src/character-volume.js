@@ -20,7 +20,7 @@ function volume(outline,depth){const rows=80,segments=72,minY=Math.min(...outlin
 function bodyVolume(outline,depth){const res=72,extent=.65,effect=new MarchingCubes(res,materials.bubu,false,false,40000);effect.isolation=0;
  const ellipsoid=(x,y,z,rx,ry,rz)=>((Math.pow(Math.abs(x/rx),2.5)+Math.pow(Math.abs(y/ry),2.5))**.8+(z/rz)**2-1)*Math.min(rx,ry,rz)*.5;
  const softmin=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
- for(let z=0;z<res;z++)for(let y=0;y<res;y++)for(let x=0;x<res;x++){const px=(x/res*2-1)*extent,py=(y/res*2-1)*extent,pz=(z/res*2-1)*extent;const torso=ellipsoid(px,py+.005,pz-.015,.397,.335,depth),left=ellipsoid(px+.233,py+.263,pz-.045,.126,.115,depth*.71),right=ellipsoid(px-.233,py+.263,pz-.045,.126,.115,depth*.71);effect.field[z*res*res+y*res+x]=-softmin(softmin(torso,left,.065),right,.065);}
+ for(let z=0;z<res;z++)for(let y=0;y<res;y++)for(let x=0;x<res;x++){const px=(x/res*2-1)*extent,py=(y/res*2-1)*extent,pz=(z/res*2-1)*extent;const torso=ellipsoid(px,py-.025,pz-.015,.397,.31,depth),left=ellipsoid(px+.233,py+.263,pz-.045,.126,.115,depth*.71),right=ellipsoid(px-.233,py+.263,pz-.045,.126,.115,depth*.71);effect.field[z*res*res+y*res+x]=-softmin(softmin(torso,left,.065),right,.065);}
  effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();g.computeBoundingBox();const box=g.boundingBox,centre=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3()),minX=Math.min(...outline.map(v=>v.x)),maxX=Math.max(...outline.map(v=>v.x)),minY=Math.min(...outline.map(v=>v.y)),maxY=Math.max(...outline.map(v=>v.y));g.translate(-centre.x,-centre.y,0);g.scale((maxX-minX)/size.x,(maxY-minY)/size.y,1);g.translate((minX+maxX)/2,(minY+maxY)/2,0);return g;
 }
 const ray=new THREE.Raycaster();
@@ -41,6 +41,8 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  for(const sign of [-1,1]){const e=ball(head,yi?materials.dark:skin,sign*.46,.425,-.05,.146,.146,.12);if(!yi)ball(head,materials.dark,sign*.46,.425,.067,.086,.088,.018);}
  const eyes=[];for(const sign of [-1,1]){const x=sign*.257,y=-.169;eyes.push(eye(head,x,y));facePatch(head,yi?materials.pink:materials.yellow,sign*.445,-.324,.113);}
  mouth(head);headRig.add(head);
+ // A recessed neck joins the head underside to the torso without extending the outer silhouette.
+ ball(root,skin,0,.685,0,.23,.065,.19);
  if(yi){if(!geometries.shoe){geometries.bodyWhite=sliceBody(geometries.body,-.28,false);geometries.shoe=sliceBody(geometries.body,-.28,true);}mesh(root,geometries.bodyWhite,skin,0,.345,0);mesh(root,geometries.shoe,materials.dark,0,.345,0);}else mesh(root,geometries.body,skin,0,.345,0);
  const arms=[];for(const sign of [-1,1]){const pivot=new THREE.Group();pivot.position.set(sign*.355,.595,.04);root.add(pivot);const arm=mesh(pivot,pawGeometry(),skin,0,-.09,.075);pivot.rotation.z=sign*.10;arms.push(pivot);}
  if(yi){const band=mesh(root,new THREE.TorusGeometry(.293,.021,10,48),materials.dark,0,.654,0);band.rotation.x=Math.PI/2;band.scale.y=.72;ball(root,materials.dark,-.045,.594,.224,.049,.065,.023).rotation.z=-.4;ball(root,materials.dark,.045,.594,.224,.049,.065,.023).rotation.z=.4;ball(root,materials.dark,0,.61,.244,.028,.03,.02);}
