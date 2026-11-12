@@ -37,7 +37,7 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  for(const sign of [-1,1]){const e=ball(head,yi?materials.dark:skin,sign*.46,.425,-.035,.146,.146,.092);if(!yi)ball(head,materials.dark,sign*.46,.425,.043,.091,.093,.025);}
  const eyes=[];for(const sign of [-1,1]){const x=sign*.257,y=-.169,z=faceZ(head,x,y);eyes.push(ball(head,materials.dark,x,y,z+.013,.049,.051,.021));facePatch(head,yi?materials.pink:materials.yellow,sign*.445,-.324,.113);}
  mouth(head);headRig.add(head);
- if(yi){if(!geometries.shoe){geometries.bodyWhite=sliceBody(geometries.body,-.255,false);geometries.shoe=sliceBody(geometries.body,-.255,true);}mesh(root,geometries.bodyWhite,skin,0,.345,0);mesh(root,geometries.shoe,materials.dark,0,.345,0);}else mesh(root,geometries.body,skin,0,.345,0);
+ if(yi){if(!geometries.shoe){geometries.bodyWhite=sliceBody(geometries.body,-.28,false);geometries.shoe=sliceBody(geometries.body,-.28,true);}mesh(root,geometries.bodyWhite,skin,0,.345,0);mesh(root,geometries.shoe,materials.dark,0,.345,0);}else mesh(root,geometries.body,skin,0,.345,0);
  const arms=[];for(const sign of [-1,1]){const pivot=new THREE.Group();pivot.position.set(sign*.385,.66,.015);root.add(pivot);const arm=mesh(pivot,new THREE.CapsuleGeometry(.073,.18,8,16),skin,0,-.142,.025);pivot.rotation.z=sign*.16;arms.push(pivot);}
  if(yi){const band=mesh(root,new THREE.TorusGeometry(.293,.021,10,48),materials.dark,0,.654,0);band.rotation.x=Math.PI/2;band.scale.y=.72;ball(root,materials.dark,-.045,.594,.224,.049,.065,.023).rotation.z=-.4;ball(root,materials.dark,.045,.594,.224,.049,.065,.023).rotation.z=.4;ball(root,materials.dark,0,.61,.244,.028,.03,.02);}
  return {root,headRig,eyes,arms};
