@@ -5,6 +5,8 @@ for (const viewport of [{width:1365,height:900},{width:390,height:844}]) {
   await page.waitForFunction(()=>window.__card?.getState().ready);
   expect(await page.evaluate(()=>window.__card.getState().renderer)).toBe('webgl');
   expect(await page.evaluate(()=>window.__card.getState().characters)).toBe(2);
+  expect(await page.evaluate(()=>window.__card.getState().art)).toBe('B-approved-layered-01');
+  expect((await page.evaluate(()=>window.__card.getState().layers)).sort((a,b)=>a-b)).toEqual([11,15]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.locator('#motion').uncheck();
   const assertEyes=async()=>{const samples=await page.evaluate(()=>window.__card.eyeSamples());expect(samples).toHaveLength(4);for(const pixel of samples){expect(pixel[0]).toBeLessThan(125);expect(pixel[1]).toBeLessThan(100);expect(pixel[2]).toBeLessThan(100);}};

@@ -29,31 +29,34 @@ function groundTexture(front=false) {return canvasTexture(1024,520,(c,w,h)=>{
  const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,front?'#324c56':'#455d6c');g.addColorStop(1,front?'#182f3d':'#2b445a');c.fillStyle=g;c.beginPath();c.moveTo(0,front?190:160);c.bezierCurveTo(220,front?70:90,620,front?150:10,1024,front?90:180);c.lineTo(w,h);c.lineTo(0,h);c.fill();
  if(front){for(let i=0;i<85;i++){let x=random()*w,y=210+random()*230;c.strokeStyle='#9ba88225';c.lineWidth=1;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x-4,y-10,x-9,y-17);c.stroke();}for(let i=0;i<12;i++){let x=80+random()*850,y=250+random()*70;star(c,x,y,2,'#e6dba572');}}
 });}
-async function svgTexture(doc, predicate, bounds) {
- const root=document.createElementNS('http://www.w3.org/2000/svg','svg');root.setAttribute('xmlns','http://www.w3.org/2000/svg');root.setAttribute('viewBox',bounds.join(' '));root.setAttribute('width',bounds[2]*4);root.setAttribute('height',bounds[3]*4);
- [...doc.documentElement.children].filter(el=>el.localName==='g'&&predicate(el.id)).forEach(el=>root.append(el.cloneNode(true)));
- const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(root)],{type:'image/svg+xml'}));
- try {const img=new Image();img.src=url;await img.decode();return canvasTexture(bounds[2]*4,bounds[3]*4,c=>c.drawImage(img,0,0));}finally{URL.revokeObjectURL(url);}
-}
+const textureLoader = new THREE.TextureLoader();
 async function character(name,x,phase) {
- const response=await fetch(`${import.meta.env.BASE_URL}characters/${name}-r05.svg`);if(!response.ok)throw new Error('角色素材加载失败');
- const doc=new DOMParser().parseFromString(await response.text(),'image/svg+xml');const yi=name==='yier',cx=yi?100:81.5,cy=yi?119:115;
- const root=new THREE.Group();root.position.set(x,-.72,.42);card.add(root);depthLayers.push({obj:root,z:.42});
- const head=new THREE.Group();root.add(head);head.position.y=(130-cy)*.009;
- const isHead=id=>yi?/^(07_|08_|09_|10_|11_|14_)/.test(id):/^(01_|02_|03_|04_|08_|09_|10_|11_|14_)/.test(id);
- const eyes=id=>/^(12_|13_)/.test(id);const body=id=>!isHead(id)&&!eyes(id);
- async function part(predicate,bounds,parent,originY,z){const tex=await svgTexture(doc,predicate,bounds);const mesh=new THREE.Mesh(new THREE.PlaneGeometry(bounds[2]*.009,bounds[3]*.009),new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.025,depthWrite:true}));mesh.position.set((bounds[0]+bounds[2]/2-cx)*.009,(originY-bounds[1]-bounds[3]/2)*.009,z);parent.add(mesh);return mesh;}
- await part(body,[0,140,205,100],root,130,0);
- await part(isHead,[0,15,205,150],head,cy,.012);
- const eyeY=yi?113.5:109.5;const eyeGroup=new THREE.Group();eyeGroup.position.y=(cy-eyeY)*.009+.018;head.add(eyeGroup);
- await part(eyes,[cx-45,eyeY-9,90,18],eyeGroup,eyeY,.025);
- root.rotation.z=yi?-.035:.035;characters.push({root,head,eyeGroup,phase,eyeOffsets:(yi?[69.9,130.92]:[51.4,112.42]).map(x=>(x-cx)*.009),baseY:root.position.y,baseRot:root.rotation.z});
+ const base = `${import.meta.env.BASE_URL}characters/b-approved/`;
+ const response = await fetch(base+name+'.json');if(!response.ok)throw new Error('角色素材加载失败');
+ const asset=await response.json(),unit=.00192,originX=asset.anchor[0],originY=asset.anchor[1],pivotY=asset.headPivot[1];
+ const root=new THREE.Group();root.position.set(x,-1.39,.42);card.add(root);depthLayers.push({obj:root,z:.42});
+ const head=new THREE.Group();head.position.y=(originY-pivotY)*unit;root.add(head);
+ const eyeY=(asset.eyeCentres[0][1]+asset.eyeCentres[1][1])/2;
+ const eyeGroup=new THREE.Group();eyeGroup.position.y=(pivotY-eyeY)*unit;head.add(eyeGroup);
+ for(const part of asset.layers){
+  const tex=await textureLoader.loadAsync(base+part.file);tex.colorSpace=THREE.SRGBColorSpace;
+  const [left,top,right,bottom]=part.bbox,w=right-left,h=bottom-top;
+  const isEye=part.name.includes('眼'),isHead=part.name.includes('头部')||part.name.includes('耳')||part.name.includes('脸红')||part.name.includes('嘴巴')||part.name.includes('颈带')||part.name.includes('领结');
+  const parent=isEye?eyeGroup:isHead?head:root,oy=isEye?eyeY:isHead?pivotY:originY;
+  const z=isEye?.034:part.name.includes('脸红')||part.name.includes('嘴巴')?.033:part.name.includes('头部')?.030:part.name.includes('耳')?.015:.012;
+  const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.025,depthWrite:true});
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w*unit,h*unit),material);mesh.name=part.name;
+  mesh.position.set(((left+right)/2-originX)*unit,(oy-(top+bottom)/2)*unit,z);parent.add(mesh);
+ }
+ root.rotation.z=name==='yier'?-.018:.018;
+ const eyeProbePoints=asset.eyeCentres.map(([x,y])=>new THREE.Vector3((x-originX)*unit,(eyeY-y)*unit,.034));
+ characters.push({root,head,eyeGroup,eyeProbePoints,phase,baseY:root.position.y,baseRot:root.rotation.z,layers:asset.layers.length});
  return root;
 }
 function eyeSamples(){
  if(renderer.isFallback)return [];
  renderer.render(scene,camera);const gl=renderer.getContext();const size=renderer.getDrawingBufferSize(new THREE.Vector2());
- return characters.flatMap(c=>c.eyeOffsets.map(x=>{const point=c.eyeGroup.localToWorld(new THREE.Vector3(x,0,.025)).project(camera);const pixel=new Uint8Array(4);gl.readPixels(Math.round((point.x*.5+.5)*size.x),Math.round((point.y*.5+.5)*size.y),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);return [...pixel];}));
+ return characters.flatMap(c=>c.eyeProbePoints.map(v=>{const point=c.eyeGroup.localToWorld(v.clone()).project(camera);const pixel=new Uint8Array(4);gl.readPixels(Math.round((point.x*.5+.5)*size.x),Math.round((point.y*.5+.5)*size.y),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);return [...pixel];}));
 }
 function makeDust(){const geo=new THREE.BufferGeometry(),pos=[],seeds=[];for(let i=0;i<48;i++){pos.push((random()-.5)*2.8,-1.05+random()*2.7,.25+random()*.45);seeds.push(random()*10);}geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
  const tex=canvasTexture(64,64,c=>{const g=c.createRadialGradient(32,32,0,32,32,30);g.addColorStop(0,'#fff3cd');g.addColorStop(.15,'#e5d5a4aa');g.addColorStop(1,'#e5d5a400');c.fillStyle=g;c.fillRect(0,0,64,64);});
@@ -64,7 +67,7 @@ function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSiz
 function frame(now){requestAnimationFrame(frame);if(!ready)return;const dt=Math.min((now-last)/1000,.04);last=now;if(!paused)time+=dt;
  angle.lerp(target,1-Math.exp(-dt*7));card.rotation.x=angle.x;card.rotation.y=angle.y;
  for(const l of depthLayers)l.obj.position.z=opts.depth?l.z:.05+l.z*.08;
- characters.forEach(c=>{const a=opts.motion?1:0;c.root.position.y=c.baseY+Math.sin(time*1.45+c.phase)*.012*a;c.root.rotation.z=c.baseRot+Math.sin(time*.65+c.phase)*.012*a;c.head.rotation.z=Math.sin(time*.72+c.phase)*.023*a;c.head.rotation.x=0;const beat=(time+c.phase)%5.4;const blink=beat<.19?Math.max(.08,Math.abs(beat-.095)/.095):1;c.eyeGroup.scale.y=opts.motion?blink:1;});
+ characters.forEach(c=>{const a=opts.motion?1:0;c.root.position.y=c.baseY+Math.sin(time*1.45+c.phase)*.009*a;c.root.rotation.z=c.baseRot+Math.sin(time*.65+c.phase)*.006*a;c.head.rotation.z=Math.sin(time*.72+c.phase)*.007*a;c.head.rotation.x=0;const beat=(time+c.phase)%5.4;const blink=beat<.19?Math.max(.08,Math.abs(beat-.095)/.095):1;c.eyeGroup.scale.y=opts.motion?blink:1;});
  dust.pts.visible=opts.particles;const data=dust.pts.geometry.attributes.position.array;for(let i=0;i<48;i++){data[i*3]=dust.base[i*3]+Math.sin(time*.3+dust.seeds[i])*.035;data[i*3+1]=dust.base[i*3+1]+Math.sin(time*.45+dust.seeds[i])*.07;data[i*3+2]=opts.depth?dust.base[i*3+2]:.09;}dust.pts.geometry.attributes.position.needsUpdate=true;dust.pts.material.opacity=.46+Math.sin(time*.8)*.12;
  if(!paused&&opts.particles&&shooting.age>2&&time-shooting.last>13){shooting.age=0;shooting.last=time;}
  if(!paused)shooting.age+=dt;shooting.line.visible=opts.particles&&shooting.age<1.3;
@@ -81,11 +84,13 @@ async function init(){
  const uv=art.geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,(uv.getX(i)+1.66)/3.32,(uv.getY(i)+2.5)/5);card.add(art);cast=art;
  const moonTex=canvasTexture(320,320,c=>{const g=c.createRadialGradient(160,160,20,160,160,150);g.addColorStop(0,'#ead9a535');g.addColorStop(1,'#ead9a500');c.fillStyle=g;c.fillRect(0,0,320,320);c.fillStyle='#f3dfae';c.beginPath();c.arc(160,160,47,0,Math.PI*2);c.fill();c.globalCompositeOperation='destination-out';c.beginPath();c.arc(180,144,43,0,Math.PI*2);c.fill();});layer(1.5,1.5,moonTex,.75,1.24,.12);
  layer(3.06,1.42,groundTexture(false),0,-1.04,.18);
- await Promise.all([character('yier',-.60,0),character('bubu',.60,2.6)]);
- layer(3.06,.45,groundTexture(true),0,-1.49,.60);
+ const contact=canvasTexture(256,64,c=>{const g=c.createRadialGradient(128,32,2,128,32,108);g.addColorStop(0,'#06162666');g.addColorStop(1,'#06162600');c.fillStyle=g;c.fillRect(0,0,256,64);});
+ layer(.82,.14,contact,-.61,-1.39,.26);layer(.82,.14,contact,.61,-1.39,.26);
+ await Promise.all([character('yier',-.61,0),character('bubu',.61,2.6)]);
+ layer(3.06,.23,groundTexture(true),0,-1.58,.60);
  const caption=canvasTexture(1024,250,(c,w,h)=>{const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1c304a');g.addColorStop(1,'#19263e');c.fillStyle=g;c.fillRect(0,0,w,h);c.fillStyle='#b5a476';c.fillRect(0,0,w,2);c.textAlign='center';c.fillStyle='#f0e4c8';c.font='45px "Songti SC", "Noto Serif CJK SC", "Card CJK", serif';c.fillText('一起看星星',512,92);c.fillStyle='#aebaca';c.font='14px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,137);c.fillStyle='#ad9d7d';c.font='12px serif';c.fillText('STARRY MOMENTS    /    NO. 001',512,204);});layer(2.92,.66,caption,0,-1.94,.72);
  dust=makeDust();foil=makeFoil();const geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);const line=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#fff1bf',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));card.add(line);shooting={line,age:4,last:0};
- resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,renderer:renderer.isFallback?'canvas-fallback':'webgl'}),...(new URLSearchParams(location.search).has('qa')?{eyeSamples}:{}),wish};
+ resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,art:'B-approved-layered-01',layers:characters.map(c=>c.layers),renderer:renderer.isFallback?'canvas-fallback':'webgl'}),...(new URLSearchParams(location.search).has('qa')?{eyeSamples}:{}),wish};
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();message('画面暂时中断，请刷新页面恢复星空');});
  let down=null,moved=false;const ray=new THREE.Raycaster();
  stage.addEventListener('pointerdown',e=>{const r=stage.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);if(!ray.intersectObject(cast).length)return;down={x:e.clientX,y:e.clientY,id:e.pointerId};moved=false;stage.setPointerCapture(e.pointerId);});
