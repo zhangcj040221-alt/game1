@@ -103,7 +103,8 @@
       0.1
     ],
     "outwardTilt": 0.28,
-    "yaw": 0.2
+    "yaw": 0.2,
+    "surface": "rounded outer rim, recessed dark inner bowl"
   },
   "cameraFit": {
     "kind": "bounded joint weak-perspective fit",
@@ -112,5 +113,6 @@
       "depth": 1.0634078201597028
     },
     "limitations": "Manual head bounds; photo stylization and expression differences; rear shape remains uncertain."
-  }
+  },
+  "capProfile": "elliptical closure at crown and chin"
 }
