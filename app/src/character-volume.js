@@ -8,13 +8,12 @@ const sphere=new THREE.SphereGeometry(1,32,24);
 function ball(parent,mat,x,y,z,sx,sy,sz){const m=new THREE.Mesh(sphere,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function mesh(parent,geo,mat,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function shapeFromPath(d,cx,cy){const doc=new SVGLoader().parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${d}"/></svg>`);const shape=SVGLoader.createShapes(doc.paths[0])[0];return shape.getSpacedPoints(144).slice(0,-1).map(p=>new THREE.Vector2((p.x-cx)*unit,(cy-p.y)*unit));}
-// Loft the approved R05 silhouette into a closed, rounded volume. No painted planes.
-function volume(outline,depth){const n=outline.length,rings=40,positions=[],indices=[];
- for(let j=0;j<=rings;j++){const t=-Math.PI/2+j/rings*Math.PI,s=Math.max(0,Math.cos(t)),z=Math.sin(t)*depth*(t<0?1.14:1);for(const p of outline)positions.push(p.x*s,p.y*s,z);}
- for(let j=0;j<rings;j++)for(let i=0;i<n;i++){const a=j*n+i,b=j*n+(i+1)%n,c=(j+1)*n+i,d=(j+1)*n+(i+1)%n;indices.push(a,c,b,b,c,d);}
- const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();
- // Normalize winding once so lighting and the front-surface raycasts agree.
- const a=new THREE.Vector3().fromBufferAttribute(g.attributes.position,n*20),normal=new THREE.Vector3().fromBufferAttribute(g.attributes.normal,n*20);if(a.dot(normal)<0){const ix=g.index.array;for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];g.computeVertexNormals();}return g;
+// Horizontal sections retain the frontal contour while turning continuously around the head.
+// The depth follows an oval vertical profile rather than converging the entire outline onto a face pole.
+function volume(outline,depth){const rows=80,segments=72,minY=Math.min(...outline.map(p=>p.y)),maxY=Math.max(...outline.map(p=>p.y)),positions=[],indices=[];
+ for(let j=0;j<=rows;j++){const t=j/rows,y=minY+(maxY-minY)*t,sample=Math.max(minY+1e-6,Math.min(maxY-1e-6,y)),hits=[];for(let i=0,k=outline.length-1;i<outline.length;k=i++){const a=outline[i],b=outline[k];if((a.y>sample)!==(b.y>sample))hits.push(a.x+(b.x-a.x)*(sample-a.y)/(b.y-a.y));}const left=Math.min(...hits),right=Math.max(...hits),cx=(left+right)/2,rx=j===0||j===rows?0:(right-left)/2,rz=depth*Math.sqrt(Math.max(0,1-(t*2-1)**2));
+ for(let i=0;i<segments;i++){const angle=i/segments*Math.PI*2,si=Math.sin(angle);positions.push(cx+Math.cos(angle)*rx,y,si*rz*(si<0?1.14:1));}}
+ for(let j=0;j<rows;j++)for(let i=0;i<segments;i++){const a=j*segments+i,b=j*segments+(i+1)%segments,c=(j+1)*segments+i,d=(j+1)*segments+(i+1)%segments;indices.push(a,c,b,b,c,d);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();const mid=segments*Math.floor(rows/2),v=new THREE.Vector3().fromBufferAttribute(g.attributes.position,mid),n=new THREE.Vector3().fromBufferAttribute(g.attributes.normal,mid);if(v.dot(n)<0){const ix=g.index.array;for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];g.computeVertexNormals();}for(let i=0;i<segments;i++){g.attributes.normal.setXYZ(i,0,-1,0);g.attributes.normal.setXYZ(rows*segments+i,0,1,0);}return g;
 }
 // A soft union of a rounded torso and two leg volumes gives a continuous chest, belly and back.
 // The frontal width and height are normalized to R05; the depth is independently designed.
