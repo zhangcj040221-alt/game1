@@ -10,11 +10,13 @@ for (const viewport of [{width:1365,height:900},{width:390,height:844}]) {
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.locator('#motion').uncheck();
   const assertEyes=async()=>{const samples=await page.evaluate(()=>window.__card.eyeSamples());expect(samples).toHaveLength(4);for(const pixel of samples){expect(pixel[0]).toBeLessThan(125);expect(pixel[1]).toBeLessThan(100);expect(pixel[2]).toBeLessThan(100);}};
-  await assertEyes();
+  const assertMouths=async()=>{const samples=await page.evaluate(()=>window.__card.mouthSamples());expect(samples).toHaveLength(2);for(const p of samples){expect(p[0]).toBeLessThan(170);expect(p[1]).toBeLessThan(140);expect(p[2]).toBeLessThan(140);}};
+  await assertEyes();await assertMouths();
   const box=await page.locator('#stage').boundingBox();const x=box.x+box.width/2,y=box.y+box.height/2;
   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+55,y+25,{steps:8});await page.waitForTimeout(200);
   expect(Math.abs((await page.evaluate(()=>window.__card.getState().angle))[1])).toBeGreaterThan(.02);await page.mouse.up();
-  for(const direction of [-1,1]){await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+direction*90,y,{steps:12});await page.waitForTimeout(450);await assertEyes();await page.screenshot({path:`test-results/eyes-${viewport.width}-${direction<0?'left':'right'}.png`,fullPage:true});await page.mouse.up();await page.waitForTimeout(450);}
+  for(const direction of [-1,1]){await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+direction*90,y,{steps:12});await page.waitForTimeout(450);await assertEyes();await assertMouths();await page.screenshot({path:`test-results/eyes-${viewport.width}-${direction<0?'left':'right'}.png`,fullPage:true});await page.mouse.up();await page.waitForTimeout(450);}
+  await page.locator('#depth').uncheck();await page.waitForTimeout(100);await assertEyes();await assertMouths();await page.locator('#depth').check();
   for(const id of ['motion','depth','particles','foil']){await page.locator('#'+id).uncheck();expect((await page.evaluate(()=>window.__card.getState().options))[id]).toBe(false);await page.locator('#'+id).check();}
   await page.locator('#pause').click();const t=await page.evaluate(()=>window.__card.getState().time);await page.waitForTimeout(150);expect(await page.evaluate(()=>window.__card.getState().time)).toBe(t);await page.locator('#pause').click();
   await page.locator('#wish').click();await expect(page.locator('#message')).toHaveClass('show');

@@ -43,20 +43,26 @@ async function character(name,x,phase) {
   const [left,top,right,bottom]=part.bbox,w=right-left,h=bottom-top;
   const isEye=part.name.includes('眼'),isHead=part.name.includes('头部')||part.name.includes('耳')||part.name.includes('脸红')||part.name.includes('嘴巴')||part.name.includes('颈带')||part.name.includes('领结');
   const parent=isEye?eyeGroup:isHead?head:root,oy=isEye?eyeY:isHead?pivotY:originY;
-  const z=isEye?.034:part.name.includes('脸红')||part.name.includes('嘴巴')?.033:part.name.includes('头部')?.030:part.name.includes('耳')?.015:.012;
+  const z=part.order*.004;
   const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.025,depthWrite:true});
   const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w*unit,h*unit),material);mesh.name=part.name;
   mesh.position.set(((left+right)/2-originX)*unit,(oy-(top+bottom)/2)*unit,z);parent.add(mesh);
  }
  root.rotation.z=name==='yier'?-.018:.018;
- const eyeProbePoints=asset.eyeCentres.map(([x,y])=>new THREE.Vector3((x-originX)*unit,(eyeY-y)*unit,.034));
- characters.push({root,head,eyeGroup,eyeProbePoints,phase,baseY:root.position.y,baseRot:root.rotation.z,layers:asset.layers.length});
+ const eyeProbePoints=asset.eyeCentres.map(([x,y])=>new THREE.Vector3((x-originX)*unit,(eyeY-y)*unit,asset.layers.find(p=>p.name.includes(x<originX?'左眼':'右眼')).order*.004));
+ const mouthProbePoint=new THREE.Vector3((asset.mouthCentre[0]-originX)*unit,(pivotY-asset.mouthCentre[1])*unit,asset.layers.find(p=>p.name.includes('嘴巴')).order*.004);
+ characters.push({root,head,eyeGroup,eyeProbePoints,mouthProbePoint,phase,baseY:root.position.y,baseRot:root.rotation.z,layers:asset.layers.length});
  return root;
 }
 function eyeSamples(){
  if(renderer.isFallback)return [];
  renderer.render(scene,camera);const gl=renderer.getContext();const size=renderer.getDrawingBufferSize(new THREE.Vector2());
  return characters.flatMap(c=>c.eyeProbePoints.map(v=>{const point=c.eyeGroup.localToWorld(v.clone()).project(camera);const pixel=new Uint8Array(4);gl.readPixels(Math.round((point.x*.5+.5)*size.x),Math.round((point.y*.5+.5)*size.y),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);return [...pixel];}));
+}
+function mouthSamples(){
+ if(renderer.isFallback)return [];
+ renderer.render(scene,camera);const gl=renderer.getContext(),size=renderer.getDrawingBufferSize(new THREE.Vector2());
+ return characters.map(c=>{const p=c.head.localToWorld(c.mouthProbePoint.clone()).project(camera),x=Math.round((p.x*.5+.5)*size.x),y=Math.round((p.y*.5+.5)*size.y),data=new Uint8Array(36);gl.readPixels(x-1,y-1,3,3,gl.RGBA,gl.UNSIGNED_BYTE,data);return Array.from({length:9},(_,i)=>[...data.slice(i*4,i*4+4)]).sort((a,b)=>a[0]-b[0])[0];});
 }
 function makeDust(){const geo=new THREE.BufferGeometry(),pos=[],seeds=[];for(let i=0;i<48;i++){pos.push((random()-.5)*2.8,-1.05+random()*2.7,.25+random()*.45);seeds.push(random()*10);}geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
  const tex=canvasTexture(64,64,c=>{const g=c.createRadialGradient(32,32,0,32,32,30);g.addColorStop(0,'#fff3cd');g.addColorStop(.15,'#e5d5a4aa');g.addColorStop(1,'#e5d5a400');c.fillStyle=g;c.fillRect(0,0,64,64);});
@@ -90,7 +96,7 @@ async function init(){
  layer(3.06,.23,groundTexture(true),0,-1.58,.60);
  const caption=canvasTexture(1024,250,(c,w,h)=>{const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1c304a');g.addColorStop(1,'#19263e');c.fillStyle=g;c.fillRect(0,0,w,h);c.fillStyle='#b5a476';c.fillRect(0,0,w,2);c.textAlign='center';c.fillStyle='#f0e4c8';c.font='45px "Songti SC", "Noto Serif CJK SC", "Card CJK", serif';c.fillText('一起看星星',512,92);c.fillStyle='#aebaca';c.font='14px serif';c.fillText('EVERY STAR IS BETTER WITH YOU',512,137);c.fillStyle='#ad9d7d';c.font='12px serif';c.fillText('STARRY MOMENTS    /    NO. 001',512,204);});layer(2.92,.66,caption,0,-1.94,.72);
  dust=makeDust();foil=makeFoil();const geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);const line=new THREE.Line(geometry,new THREE.LineBasicMaterial({color:'#fff1bf',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));card.add(line);shooting={line,age:4,last:0};
- resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,art:'B-approved-layered-01',layers:characters.map(c=>c.layers),renderer:renderer.isFallback?'canvas-fallback':'webgl'}),...(new URLSearchParams(location.search).has('qa')?{eyeSamples}:{}),wish};
+ resize();new ResizeObserver(resize).observe(stage);document.querySelector('#loading').remove();ready=true;window.__card={getState:()=>({ready,paused,time,options:{...opts},angle:angle.toArray(),characters:characters.length,art:'B-approved-layered-01',layers:characters.map(c=>c.layers),renderer:renderer.isFallback?'canvas-fallback':'webgl'}),...(new URLSearchParams(location.search).has('qa')?{eyeSamples,mouthSamples}:{}),wish};
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();message('画面暂时中断，请刷新页面恢复星空');});
  let down=null,moved=false;const ray=new THREE.Raycaster();
  stage.addEventListener('pointerdown',e=>{const r=stage.getBoundingClientRect();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);if(!ray.intersectObject(cast).length)return;down={x:e.clientX,y:e.clientY,id:e.pointerId};moved=false;stage.setPointerCapture(e.pointerId);});
