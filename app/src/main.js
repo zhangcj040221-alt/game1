@@ -106,7 +106,7 @@ async function init(){
  stage.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();wish();}if(e.key.startsWith('Arrow')){e.preventDefault();target.set(e.key==='ArrowUp'?-.15:e.key==='ArrowDown'?.15:0,e.key==='ArrowLeft'?-.2:e.key==='ArrowRight'?.2:0);setTimeout(()=>target.set(0,0),450);}});
  document.addEventListener('visibilitychange',()=>{last=performance.now();});
 }
-for(const key of Object.keys(opts))document.getElementById(key).addEventListener('change',e=>{opts[key]=e.target.checked;});
+for(const key of Object.keys(opts))document.getElementById(key).addEventListener('change',e=>{opts[key]=e.target.checked;if(key==='motion'&&!opts.motion)characters.forEach(c=>{c.eyeGroup.scale.y=1;c.head.rotation.z=0;c.root.position.y=c.baseY;c.root.rotation.z=c.baseRot;});});
 document.querySelector('#wish').addEventListener('click',wish);
 function syncPause(){const b=document.querySelector('#pause');b.textContent=paused?'继续看星星':'暂停这一刻';b.setAttribute('aria-pressed',String(paused));}syncPause();
 document.querySelector('#pause').addEventListener('click',()=>{paused=!paused;syncPause();});

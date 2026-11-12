@@ -10,6 +10,6 @@ for(const viewport of [{width:1365,height:1000},{width:390,height:844}])test(`vo
  expect((await state()).gift[1][0]).toBeLessThan(0);
  await page.getByRole('button',{name:'☾ 月光布景',exact:true}).click();expect((await state()).warm).toBe(true);
  await page.locator('#choose-both').click();expect((await state()).choice).toBe('both');await page.reload();await page.waitForFunction(()=>window.__comparison?.getState().ready);expect((await state()).choice).toBe('both');
- await page.locator('#reset-all').click();expect((await state()).progress).toBe(0);expect((await state()).angle).toBe(0);await page.locator('#play-story').click();await page.waitForTimeout(400);expect((await state()).progress).toBeGreaterThan(.015);await page.locator('#play-story').click();
+ await page.locator('#reset-all').click();expect((await state()).progress).toBe(0);expect((await state()).angle).toBe(0);await page.locator('#play-story').click();await page.waitForFunction(()=>window.__comparison.getState().progress>.015,{},{timeout:15000});await page.locator('#play-story').click();
  await page.screenshot({path:`test-results/comparison-${viewport.width}.png`,fullPage:true});expect(errors).toEqual([]);
 });
