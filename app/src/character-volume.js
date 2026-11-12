@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 const geometries={},unit=.0085;
 const clay=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.43,metalness:0,...extra});
@@ -14,6 +15,13 @@ function volume(outline,depth){const n=outline.length,rings=40,positions=[],indi
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();
  // Normalize winding once so lighting and the front-surface raycasts agree.
  const a=new THREE.Vector3().fromBufferAttribute(g.attributes.position,n*20),normal=new THREE.Vector3().fromBufferAttribute(g.attributes.normal,n*20);if(a.dot(normal)<0){const ix=g.index.array;for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];g.computeVertexNormals();}return g;
+}
+// Rounded extrusion of the exact 2D silhouette avoids pinching a concave body into a single front pole.
+function bodyVolume(outline,depth){const res=64,extent=.55,radius=.10,effect=new MarchingCubes(res,materials.bubu,false,false,30000);effect.isolation=0;
+ const distance=(x,y)=>{let inside=false,dist=1e6;for(let i=0,j=outline.length-1;i<outline.length;j=i++){const a=outline[i],b=outline[j],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy)));dist=Math.min(dist,Math.hypot(x-a.x-t*dx,y-a.y-t*dy));if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;}return inside?-dist:dist;};
+ const xy=new Float32Array(res*res);for(let y=0;y<res;y++)for(let x=0;x<res;x++)xy[y*res+x]=distance((x/res*2-1)*extent,(y/res*2-1)*extent);
+ for(let z=0;z<res;z++)for(let y=0;y<res;y++)for(let x=0;x<res;x++){const qx=xy[y*res+x]+radius,qz=Math.abs((z/res*2-1)*extent)-(depth-radius);const sdf=Math.hypot(Math.max(qx,0),Math.max(qz,0))+Math.min(Math.max(qx,qz),0)-radius;effect.field[z*res*res+y*res+x]=-sdf;}
+ effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();return g;
 }
 const ray=new THREE.Raycaster();
 function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
@@ -31,4 +39,4 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  return {root,headRig,eyes,arms};
 }
 
-export {materials,geometries,clay,ball,mesh,shapeFromPath,volume,character};
+export {materials,geometries,clay,ball,mesh,shapeFromPath,volume,bodyVolume,character};

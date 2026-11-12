@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {materials,geometries,clay,ball,mesh,shapeFromPath,volume,character} from './character-volume.js';
+import {materials,geometries,clay,ball,mesh,shapeFromPath,volume,bodyVolume,character} from './character-volume.js';
 
 const $=s=>document.querySelector(s),clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const smooth=(a,b,t)=>{const p=clamp((t-a)/(b-a));return p*p*(3-2*p);};
@@ -53,5 +53,5 @@ let previous=performance.now();function frame(){requestAnimationFrame(frame);con
  v.skyStars.forEach((s,i)=>s.scale.setScalar(.86+Math.sin(t*.8+i)*.14));if(v.viewportVisible)v.renderer.render(v.scene,v.camera);
  }
 }
-async function init(){try{await document.fonts.load('14px "Card CJK"');const r=await fetch(`${import.meta.env.BASE_URL}characters/volume-r05.json`);if(!r.ok)throw new Error('角色轮廓加载失败');const d=await r.json();geometries.head=volume(shapeFromPath(d['头部填色'],81.5,89.5),.34);geometries.body=volume(shapeFromPath(d['躯干'],81.5,184),.22);makeView('#scene-a','a');makeView('#scene-b','b');state.ready=true;window.__comparison={getState:()=>({...state,views:views.length,meshes:views.map(v=>{let n=0;v.scene.traverse(o=>{if(o.isMesh)n++;});return n;}),yaw:views.map(v=>v.yaw),gift:views.map(v=>v.gift.position.toArray())})};frame();}catch(e){state.renderer='unavailable';state.error=String(e.message);document.querySelectorAll('.loading').forEach(el=>{el.className='unsupported';el.innerHTML='<strong>此浏览器暂时无法显示三维画面</strong><span>请使用支持 WebGL 的 Safari 或 Chrome 打开本页。</span><small>此处保留 A / B 的操作说明；三维效果需要图形加速。</small>';});console.warn(e);window.__comparison={getState:()=>({...state,views:views.length})};}}
+async function init(){try{await document.fonts.load('14px "Card CJK"');const r=await fetch(`${import.meta.env.BASE_URL}characters/volume-r05.json`);if(!r.ok)throw new Error('角色轮廓加载失败');const d=await r.json();geometries.head=volume(shapeFromPath(d['头部填色'],81.5,89.5),.34);geometries.body=bodyVolume(shapeFromPath(d['躯干'],81.5,184),.22);makeView('#scene-a','a');makeView('#scene-b','b');state.ready=true;window.__comparison={getState:()=>({...state,views:views.length,meshes:views.map(v=>{let n=0;v.scene.traverse(o=>{if(o.isMesh)n++;});return n;}),yaw:views.map(v=>v.yaw),gift:views.map(v=>v.gift.position.toArray())})};frame();}catch(e){state.renderer='unavailable';state.error=String(e.message);document.querySelectorAll('.loading').forEach(el=>{el.className='unsupported';el.innerHTML='<strong>此浏览器暂时无法显示三维画面</strong><span>请使用支持 WebGL 的 Safari 或 Chrome 打开本页。</span><small>此处保留 A / B 的操作说明；三维效果需要图形加速。</small>';});console.warn(e);window.__comparison={getState:()=>({...state,views:views.length})};}}
 init();
