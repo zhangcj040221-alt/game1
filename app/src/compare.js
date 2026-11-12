@@ -1,0 +1,85 @@
+import * as THREE from 'three';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+
+const $=s=>document.querySelector(s),clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const smooth=(a,b,t)=>{const p=clamp((t-a)/(b-a));return p*p*(3-2*p);};
+const state={ready:false,renderer:'webgl',paused:matchMedia('(prefers-reduced-motion: reduce)').matches,warm:false,progress:0,angle:0,playing:false,time:0,choice:null};
+const views=[],geometries={},unit=.0085;
+const clay=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.43,metalness:0,...extra});
+const materials={yier:clay('#f5eee3'),bubu:clay('#d99a68'),dark:clay('#42251e',{roughness:.38}),pink:clay('#efaa9c',{roughness:.48}),yellow:clay('#f0bf64',{roughness:.48}),gold:clay('#cba86b',{metalness:.72,roughness:.29}),floor:clay('#292e4c',{roughness:.64}),back:clay('#20213e',{roughness:.65})};
+const sphere=new THREE.SphereGeometry(1,32,24);
+function ball(parent,mat,x,y,z,sx,sy,sz){const m=new THREE.Mesh(sphere,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function mesh(parent,geo,mat,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function shapeFromPath(d,cx,cy){const doc=new SVGLoader().parse(`<svg xmlns="http://www.w3.org/2000/svg"><path d="${d}"/></svg>`);const shape=SVGLoader.createShapes(doc.paths[0])[0];return shape.getSpacedPoints(144).slice(0,-1).map(p=>new THREE.Vector2((p.x-cx)*unit,(cy-p.y)*unit));}
+// Loft the approved R05 silhouette into a closed, rounded volume. No painted planes.
+function volume(outline,depth){const n=outline.length,rings=40,positions=[],indices=[];
+ for(let j=0;j<=rings;j++){const t=-Math.PI/2+j/rings*Math.PI,s=Math.pow(Math.max(.000001,Math.cos(t)),.48),z=Math.sin(t)*depth;for(const p of outline)positions.push(p.x*s,p.y*s,z);}
+ for(let j=0;j<rings;j++)for(let i=0;i<n;i++){const a=j*n+i,b=j*n+(i+1)%n,c=(j+1)*n+i,d=(j+1)*n+(i+1)%n;indices.push(a,c,b,b,c,d);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();
+ // Normalize winding once so lighting and the front-surface raycasts agree.
+ const a=new THREE.Vector3().fromBufferAttribute(g.attributes.position,n*20),normal=new THREE.Vector3().fromBufferAttribute(g.attributes.normal,n*20);if(a.dot(normal)<0){const ix=g.index.array;for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];g.computeVertexNormals();}return g;
+}
+const ray=new THREE.Raycaster();
+function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
+function facePatch(head,mat,cx,cy,r){const g=new THREE.CircleGeometry(r,48),p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i)+cx,y=p.getY(i)+cy;p.setXYZ(i,x,y,faceZ(head,x,y)+.003);}g.computeVertexNormals();return mesh(head,g,mat);}
+function mouth(head){const curve=new THREE.CurvePath();const points=[[-.058,-.177],[-.058,-.211],[-.021,-.219],[0,-.193],[.021,-.219],[.058,-.211],[.058,-.177]];const p=points.map(([x,y])=>new THREE.Vector3(x,y,faceZ(head,x,y)+.01));curve.add(new THREE.CubicBezierCurve3(p[0],p[1],p[2],p[3]));curve.add(new THREE.CubicBezierCurve3(p[3],p[4],p[5],p[6]));mesh(head,new THREE.TubeGeometry(curve,40,.009,8,false),materials.dark);for(const v of [p[0],p[6]])ball(head,materials.dark,...v.toArray(),.009,.009,.009);}
+function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.155;
+ const skin=yi?materials.yier:materials.bubu,head=new THREE.Mesh(geometries.head,skin);head.castShadow=true;head.receiveShadow=true;
+ // Build face in head-local space before mounting the head rig.
+ for(const sign of [-1,1]){const e=ball(head,yi?materials.dark:skin,sign*.46,.425,-.035,.146,.146,.092);if(!yi)ball(head,materials.dark,sign*.46,.425,.043,.091,.093,.025);}
+ const eyes=[];for(const sign of [-1,1]){const x=sign*.257,y=-.169,z=faceZ(head,x,y);eyes.push(ball(head,materials.dark,x,y,z+.013,.049,.051,.021));facePatch(head,yi?materials.pink:materials.yellow,sign*.445,-.324,.113);}
+ mouth(head);headRig.add(head);
+ mesh(root,geometries.body,skin,0,.345,0);
+ const arms=[];for(const sign of [-1,1]){const pivot=new THREE.Group();pivot.position.set(sign*.385,.66,.015);root.add(pivot);const arm=mesh(pivot,new THREE.CapsuleGeometry(.073,.18,8,16),skin,0,-.142,.025);pivot.rotation.z=sign*.16;arms.push(pivot);if(yi)ball(root,materials.dark,sign*.275,.034,.055,.119,.055,.143);}
+ if(yi){const band=mesh(root,new THREE.TorusGeometry(.293,.021,10,48),materials.dark,0,.654,0);band.rotation.x=Math.PI/2;band.scale.y=.72;ball(root,materials.dark,-.045,.594,.224,.049,.065,.023).rotation.z=-.4;ball(root,materials.dark,.045,.594,.224,.049,.065,.023).rotation.z=.4;ball(root,materials.dark,0,.61,.244,.028,.03,.02);}
+ return {root,headRig,eyes,arms};
+}
+function rounded(w,h,r){const s=new THREE.Shape();s.moveTo(-w/2+r,-h/2);s.lineTo(w/2-r,-h/2);s.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);s.lineTo(w/2,h/2-r);s.quadraticCurveTo(w/2,h/2,w/2-r,h/2);s.lineTo(-w/2+r,h/2);s.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);s.lineTo(-w/2,-h/2+r);s.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);return s;}
+function starShape(r=.18){const s=new THREE.Shape();for(let i=0;i<10;i++){const a=Math.PI/2+i*Math.PI/5,rr=i%2?r*.47:r,x=Math.cos(a)*rr,y=Math.sin(a)*rr;i?s.lineTo(x,y):s.moveTo(x,y);}s.closePath();return s;}
+function solid(shape,depth=.04,bevel=.02){return new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:true,bevelSegments:3,steps:1,bevelSize:bevel,bevelThickness:bevel,curveSegments:32});}
+function textTexture(){const c=document.createElement('canvas');c.width=1024;c.height=240;const x=c.getContext('2d');x.textAlign='center';x.fillStyle='#f2dfba';x.font='42px "Card CJK",sans-serif';x.fillText('把星星送给你',512,86);x.fillStyle='#ac99ad';x.font='17px serif';x.fillText('A LITTLE STAR, A LITTLE LOVE',512,144);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+function makeView(id,kind){const host=$(id),renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.22;host.append(renderer.domElement);host.querySelector('.loading').remove();
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,.1,30);scene.add(new THREE.HemisphereLight('#d9d9ff','#4f3d4b',2.15));
+ const key=new THREE.DirectionalLight('#fff0de',4.0);key.position.set(-2.8,4.8,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-2.4;key.shadow.camera.right=2.4;key.shadow.camera.top=3.5;key.shadow.camera.bottom=-1;key.shadow.normalBias=.018;key.shadow.bias=-.00025;key.shadow.radius=3;scene.add(key);key.target.position.y=.8;scene.add(key.target);
+ const rim=new THREE.DirectionalLight('#a3b9ff',2.1);rim.position.set(3,2,-2);scene.add(rim);const fill=new THREE.PointLight('#f7be78',3,7);fill.position.set(.2,1.4,2.3);scene.add(fill);
+ const all=new THREE.Group();scene.add(all);
+ const outer=rounded(3.48,4.28,.22),inner=rounded(3.29,4.08,.16);outer.holes.push(new THREE.Path(inner.getPoints().reverse()));mesh(all,solid(outer,.12,.012),materials.gold,0,1.25,.43);
+ const back=mesh(all,solid(rounded(3.31,4.10,.17),.045,.008),materials.back,0,1.25,-.67);back.receiveShadow=true;
+ const floor=mesh(all,new THREE.BoxGeometry(3.24,.11,1.18),materials.floor,0,-.075,-.03);floor.receiveShadow=true;
+ for(const sign of [-1,1])mesh(all,new THREE.BoxGeometry(.055,3.95,1.13),materials.back,sign*1.63,1.24,-.1);
+ // A raised plinth makes the feet meet the stage and casts visible contact shadows.
+ mesh(all,new THREE.CylinderGeometry(1.47,1.51,.10,64),clay('#35394e',{roughness:.6}),0,-.005,-.02).scale.z=.43;
+ const moonGroup=new THREE.Group();all.add(moonGroup);moonGroup.position.set(.88,2.62,-.34);const moon=ball(moonGroup,clay('#e6c786',{emissive:'#8c6130',emissiveIntensity:.18}),0,0,0,.28,.28,.045);ball(moonGroup,materials.back,.12,.09,.06,.245,.245,.035);
+ const starMat=clay('#edcd8c',{emissive:'#b38b47',emissiveIntensity:.22,roughness:.36});const skyStars=[];let seed=71;const random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
+ for(let i=0;i<29;i++){const x=(random()-.5)*2.86,y=1.97+random()*1.05,z=-.52+random()*.2;const st=mesh(all,solid(starShape(.012+random()*.018),.006,.002),starMat,x,y,z);st.rotation.z=random();skyStars.push(st);}
+ const yi=character(true),bu=character(false);yi.root.position.set(-.72,.047,.04);bu.root.position.set(.72,.047,.04);all.add(yi.root,bu.root);
+ const gift=mesh(all,solid(starShape(.18),.055,.027),clay('#f4cc70',{emissive:'#d99a36',emissiveIntensity:.25,roughness:.3}),.40,.88,.43);gift.rotation.z=-.15;
+ const caption=mesh(all,new THREE.PlaneGeometry(2.5,.58),new THREE.MeshBasicMaterial({map:textTexture(),transparent:true,depthWrite:false}),0,-.49,.46);caption.castShadow=false;
+ const hearts=[];const heartShape=new THREE.Shape();heartShape.moveTo(0,-.08);heartShape.bezierCurveTo(-.20,.04,-.14,.18,0,.09);heartShape.bezierCurveTo(.14,.18,.20,.04,0,-.08);
+ const heartMat=clay('#ed9ca9',{emissive:'#a54c68',emissiveIntensity:.32});for(let i=0;i<6;i++){const h=mesh(all,solid(heartShape,.018,.009),heartMat,(i-2.5)*.32,2.02+(i%2)*.15,.13);h.scale.setScalar(.38+(i%3)*.12);hearts.push(h);}
+ const view={host,renderer,scene,camera,yi,bu,gift,hearts,skyStars,key,rim,fill,kind,yaw:0,viewportVisible:true};views.push(view);
+ const resize=()=>{const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};new ResizeObserver(resize).observe(host);resize();new IntersectionObserver(([e])=>{view.viewportVisible=e.isIntersecting;},{rootMargin:'160px'}).observe(host);
+ let pointer=null;host.addEventListener('pointerdown',e=>{pointer={id:e.pointerId,x:e.clientX,y:e.clientY,value:kind==='a'?state.angle:state.progress};state.playing=false;updatePlay();host.setPointerCapture(e.pointerId);});host.addEventListener('pointermove',e=>{if(!pointer||e.pointerId!==pointer.id)return;const dx=e.clientX-pointer.x;if(kind==='a')setAngle(pointer.value+dx/host.clientWidth*90);else setProgress(pointer.value+dx/host.clientWidth*1.3);});const up=()=>pointer=null;host.addEventListener('pointerup',up);host.addEventListener('pointercancel',up);host.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const dir=e.key==='ArrowLeft'?-1:1;if(kind==='a')setAngle(e.key==='Home'?0:state.angle+dir*5);else{state.playing=false;setProgress(e.key==='Home'?0:e.key==='End'?1:state.progress+dir*.1);updatePlay();}});return view;
+}
+function setAngle(n){state.angle=clamp(n,-35,35);$('#view-a').value=state.angle;$('#angle-a').textContent=`${Math.round(state.angle)}°`;document.querySelectorAll('[data-angle]').forEach(b=>b.classList.toggle('active',Math.abs(+b.dataset.angle-state.angle)<3));}
+function setProgress(n){state.progress=clamp(n);const percent=Math.round(state.progress*100);$('#story-b').value=percent;$('#story-percent').textContent=percent+'%';$('#story-label').textContent=state.progress<.28?'01 / 藏好星星':state.progress<.76?'02 / 慢慢递给你':'03 / 收到这份心意';document.querySelectorAll('[data-progress]').forEach(b=>b.classList.toggle('active',Math.abs(+b.dataset.progress-percent)<15));}
+function updatePlay(){$('#play-story').textContent=state.playing?'Ⅱ 暂停剧情':'▷ 自动播放';}
+$('#view-a').addEventListener('input',e=>setAngle(+e.target.value));$('#story-b').addEventListener('input',e=>{state.playing=false;setProgress(+e.target.value/100);updatePlay();});document.querySelectorAll('[data-angle]').forEach(b=>b.addEventListener('click',()=>setAngle(+b.dataset.angle)));document.querySelectorAll('[data-progress]').forEach(b=>b.addEventListener('click',()=>{state.playing=false;setProgress(+b.dataset.progress/100);updatePlay();}));
+$('#play-story').addEventListener('click',()=>{if(state.progress>.995)setProgress(0);state.playing=!state.playing;updatePlay();});
+$('#pause-all').addEventListener('click',()=>{state.paused=!state.paused;$('#pause-all').setAttribute('aria-pressed',state.paused);$('#pause-all').textContent=state.paused?'继续微动':'暂停微动';});
+$('#light-toggle').addEventListener('click',()=>{state.warm=!state.warm;$('#light-toggle').setAttribute('aria-pressed',state.warm);$('#light-toggle').textContent=state.warm?'☀ 暖光布景':'☾ 月光布景';});
+$('#reset-all').addEventListener('click',()=>{setAngle(0);setProgress(0);state.playing=false;state.time=0;updatePlay();});
+function choose(value){state.choice=value;for(const x of ['a','b','both'])$('#choose-'+x).setAttribute('aria-pressed',x===value);$('#choice-note').textContent=value==='both'?'已记录：立体小舞台＋拖动剧情。':value==='a'?'已记录：更喜欢 A 的立体摆件感。':'已记录：更喜欢 B 的互动过程。';try{localStorage.setItem('yier-bubu-comparison',value);}catch{}}
+for(const x of ['a','b','both'])$('#choose-'+x).addEventListener('click',()=>choose(x));try{const x=localStorage.getItem('yier-bubu-comparison');if(['a','b','both'].includes(x))choose(x);}catch{}
+const tick=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=Math.min(tick.getDelta(),.05);if(!state.ready)return;if(!state.paused)state.time+=dt;if(state.playing){setProgress(state.progress+dt/8);if(state.progress>=1){state.playing=false;updatePlay();}}
+ const t=state.time,p=state.progress;
+ for(const v of views){const targetYaw=(v.kind==='a'?state.angle:((p-.5)*9))*Math.PI/180;v.yaw=THREE.MathUtils.lerp(v.yaw,targetYaw,Math.min(1,dt*8));const distance=v.camera.aspect<.76?8.3:7.7;v.camera.position.set(Math.sin(v.yaw)*distance,1.70+Math.abs(Math.sin(v.yaw))*.22,Math.cos(v.yaw)*distance);v.camera.lookAt(0,1.13,0);
+ v.key.color.set(state.warm?'#ffe2bd':'#fff0de');v.rim.color.set(state.warm?'#d6bbcb':'#a3b9ff');v.key.position.x=state.warm?-3.4:-2.8;v.fill.intensity=state.warm?4:3;
+ for(const [i,c] of [v.yi,v.bu].entries()){const breath=state.paused?0:Math.sin(t*1.5+i*2.3)*.009;c.root.position.y=.047+breath;const beat=(t+i*2.4)%5.2,blink=beat<.18?Math.max(.08,Math.abs(beat-.09)/.09):1;c.eyes.forEach(e=>e.scale.y=.051*(state.paused?1:blink));c.headRig.rotation.z=state.paused?0:Math.sin(t*.65+i)*.012;c.headRig.rotation.y=0;c.root.rotation.z=0;c.root.position.x=i?.72:-.72;c.arms[0].rotation.z=-.16;c.arms[1].rotation.z=.16;}
+ if(v.kind==='a'){v.yi.headRig.rotation.y=Math.sin(t*.45)*.09;v.bu.headRig.rotation.y=-Math.sin(t*.45+.7)*.09;v.bu.arms[0].rotation.z=-.88;v.gift.position.set(.35,.91+Math.sin(t)*.012,.43);v.gift.rotation.y=Math.sin(t*.5)*.12;v.hearts.forEach(h=>h.visible=false);}
+ else{const reach=smooth(.08,.48,p),receive=smooth(.35,.85,p),near=smooth(.73,1,p);v.bu.arms[0].rotation.z=-.16-reach*1.05;v.yi.arms[1].rotation.z=.16+receive*.9;v.yi.root.position.x=-.72+near*.055;v.bu.root.position.x=.72-near*.055;v.yi.root.rotation.z=-near*.035;v.bu.root.rotation.z=near*.035;v.yi.headRig.rotation.y=receive*.1;v.bu.headRig.rotation.y=-reach*.12;const pass=smooth(.26,.83,p);v.gift.position.set(THREE.MathUtils.lerp(.36,-.33,pass),.73+Math.sin(pass*Math.PI)*.18+reach*.12,.43);v.gift.rotation.z=-.18+pass*.33;v.gift.rotation.y=pass*.2;v.hearts.forEach((h,i)=>{h.visible=p>.78;h.position.y=1.92+(i%2)*.18+Math.sin(t+i)*.035;h.scale.setScalar((.38+i%3*.12)*smooth(.78,1,p));});}
+ v.skyStars.forEach((s,i)=>s.scale.setScalar(.86+Math.sin(t*.8+i)*.14));if(v.viewportVisible)v.renderer.render(v.scene,v.camera);
+ }
+}
+async function init(){try{await document.fonts.load('14px "Card CJK"');const r=await fetch(`${import.meta.env.BASE_URL}characters/volume-r05.json`);if(!r.ok)throw new Error('角色轮廓加载失败');const d=await r.json();geometries.head=volume(shapeFromPath(d['头部填色'],81.5,89.5),.34);geometries.body=volume(shapeFromPath(d['躯干'],81.5,184),.22);makeView('#scene-a','a');makeView('#scene-b','b');state.ready=true;window.__comparison={getState:()=>({...state,views:views.length,meshes:views.map(v=>{let n=0;v.scene.traverse(o=>{if(o.isMesh)n++;});return n;}),yaw:views.map(v=>v.yaw),gift:views.map(v=>v.gift.position.toArray())})};frame();}catch(e){state.renderer='unavailable';state.error=String(e.message);document.querySelectorAll('.loading').forEach(el=>{el.className='unsupported';el.innerHTML='<strong>此浏览器暂时无法显示三维画面</strong><span>请使用支持 WebGL 的 Safari 或 Chrome 打开本页。</span><small>此处保留 A / B 的操作说明；三维效果需要图形加速。</small>';});console.warn(e);window.__comparison={getState:()=>({...state,views:views.length})};}}
+init();
