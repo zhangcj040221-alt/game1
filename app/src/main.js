@@ -43,14 +43,14 @@ async function character(name,x,phase) {
   const [left,top,right,bottom]=part.bbox,w=right-left,h=bottom-top;
   const isEye=part.name.includes('眼'),isHead=part.name.includes('头部')||part.name.includes('耳')||part.name.includes('脸红')||part.name.includes('嘴巴')||part.name.includes('颈带')||part.name.includes('领结');
   const parent=isEye?eyeGroup:isHead?head:root,oy=isEye?eyeY:isHead?pivotY:originY;
-  const z=part.order*.004;
+  const z=part.order*.0001;
   const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.025,depthWrite:true});
-  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w*unit,h*unit),material);mesh.name=part.name;
+  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w*unit,h*unit),material);mesh.name=part.name;mesh.renderOrder=10+part.order;
   mesh.position.set(((left+right)/2-originX)*unit,(oy-(top+bottom)/2)*unit,z);parent.add(mesh);
  }
  root.rotation.z=name==='yier'?-.018:.018;
- const eyeProbePoints=asset.eyeCentres.map(([x,y])=>new THREE.Vector3((x-originX)*unit,(eyeY-y)*unit,asset.layers.find(p=>p.name.includes(x<originX?'左眼':'右眼')).order*.004));
- const mouthProbePoint=new THREE.Vector3((asset.mouthCentre[0]-originX)*unit,(pivotY-asset.mouthCentre[1])*unit,asset.layers.find(p=>p.name.includes('嘴巴')).order*.004);
+ const eyeProbePoints=asset.eyeCentres.map(([x,y])=>new THREE.Vector3((x-originX)*unit,(eyeY-y)*unit,asset.layers.find(p=>p.name.includes(x<originX?'左眼':'右眼')).order*.0001));
+ const mouthProbePoint=new THREE.Vector3((asset.mouthCentre[0]-originX)*unit,(pivotY-asset.mouthCentre[1])*unit,asset.layers.find(p=>p.name.includes('嘴巴')).order*.0001);
  characters.push({root,head,eyeGroup,eyeProbePoints,mouthProbePoint,phase,baseY:root.position.y,baseRot:root.rotation.z,layers:asset.layers.length});
  return root;
 }
