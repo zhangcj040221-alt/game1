@@ -94,8 +94,8 @@
     "radius": 0.103
   },
   "ear": {
-    "x": 0.46202,
-    "y": 0.48081,
+    "x": 0.45402,
+    "y": 0.44581,
     "z": -0.05849,
     "radius": [
       0.13,
@@ -104,7 +104,13 @@
     ],
     "outwardTilt": 0.28,
     "yaw": 0.2,
-    "surface": "rounded outer rim, recessed dark inner bowl"
+    "surface": "rounded outer rim, recessed dark inner bowl",
+    "initialFitCentre": [
+      0.46202,
+      0.48081,
+      -0.05849
+    ],
+    "rootInsetNote": "Lowered and inset after same-view comparison to bury the lower rim in the crown; camera estimates retained for visual checking."
   },
   "cameraFit": {
     "kind": "bounded joint weak-perspective fit",
