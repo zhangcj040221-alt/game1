@@ -1,0 +1,51 @@
+{
+  "version": "art-v01",
+  "baseline": "R05",
+  "status": "首版美术资产，待视觉验收",
+  "styles": [
+    {
+      "style": "A",
+      "name": "柔光绘本_主版本",
+      "characters": [
+        {
+          "character": "一二",
+          "svg": "一二-A.svg",
+          "png": "一二-A.png",
+          "layer_count": 14,
+          "geometry_equal_to_R05": true,
+          "source_sha256": "2b1ac24052a4c7054b50c12e6054002487c6487c29c28569239217605fd45789"
+        },
+        {
+          "character": "布布",
+          "svg": "布布-A.svg",
+          "png": "布布-A.png",
+          "layer_count": 14,
+          "geometry_equal_to_R05": true,
+          "source_sha256": "76baff0a861945e8964656d91cf21ea877a50805f2a525cd588b27f690db6528"
+        }
+      ]
+    },
+    {
+      "style": "B",
+      "name": "哑光软陶_辅助版本",
+      "characters": [
+        {
+          "character": "一二",
+          "svg": "一二-B.svg",
+          "png": "一二-B.png",
+          "layer_count": 14,
+          "geometry_equal_to_R05": true,
+          "source_sha256": "2b1ac24052a4c7054b50c12e6054002487c6487c29c28569239217605fd45789"
+        },
+        {
+          "character": "布布",
+          "svg": "布布-B.svg",
+          "png": "布布-B.png",
+          "layer_count": 14,
+          "geometry_equal_to_R05": true,
+          "source_sha256": "76baff0a861945e8964656d91cf21ea877a50805f2a525cd588b27f690db6528"
+        }
+      ]
+    }
+  ]
+}

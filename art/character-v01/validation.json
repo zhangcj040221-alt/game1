@@ -1,0 +1,485 @@
+{
+  "geometry_assertions": "passed for all four SVGs",
+  "transparent_pngs": [
+    {
+      "path": "A_柔光绘本_主版本/布布-A.png",
+      "size": [
+        1440,
+        1440
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二-A.png",
+      "size": [
+        1440,
+        1440
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二-B.png",
+      "size": [
+        1440,
+        1440
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布-B.png",
+      "size": [
+        1440,
+        1440
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/06_07_头部.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/12_13_右眼_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/10_11_右腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/13_14_圆润W嘴_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/08_09_右耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/02_02_右手_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/09_10_左腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/03_03_躯干_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/04_15_颈带_与领结相连.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/01_01_左手_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/00_04_独立鞋子_连接共享腿部.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/05_06_领结.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/07_08_左耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/一二_layers/11_12_左眼_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/11_12_左眼.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/02_03_右耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/08_09_头部连续外轮廓_中央不造黑线.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/10_11_右腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/03_04_右内耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/09_10_左腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/12_13_右眼.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/07_08_头部_下缘闭合为装配补面.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/05_06_右手.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/04_05_左手.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/13_14_圆润W嘴.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/06_07_躯干_头后闭合段为装配补面.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/01_02_左内耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "A_柔光绘本_主版本/布布_layers/00_01_左耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/06_07_头部.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/12_13_右眼_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/10_11_右腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/13_14_圆润W嘴_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/08_09_右耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/02_02_右手_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/09_10_左腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/03_03_躯干_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/04_15_颈带_与领结相连.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/01_01_左手_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/00_04_独立鞋子_连接共享腿部.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/05_06_领结.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/07_08_左耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/一二_layers/11_12_左眼_复用布布.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/11_12_左眼.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/02_03_右耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/08_09_头部连续外轮廓_中央不造黑线.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/10_11_右腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/03_04_右内耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/09_10_左腮红.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/12_13_右眼.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/07_08_头部_下缘闭合为装配补面.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/05_06_右手.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/04_05_左手.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/13_14_圆润W嘴.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/06_07_躯干_头后闭合段为装配补面.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/01_02_左内耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    },
+    {
+      "path": "B_哑光软陶_辅助版本/布布_layers/00_01_左耳.png",
+      "size": [
+        960,
+        960
+      ],
+      "transparent_corner": true
+    }
+  ]
+}
