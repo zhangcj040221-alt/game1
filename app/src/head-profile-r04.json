@@ -1,0 +1,116 @@
+{
+  "version": "R04-head-study",
+  "status": "pending",
+  "basis": "Cross-view study from supplied figurine photos; camera estimates and sculpted sections, not official dimensions.",
+  "sections": [
+    [
+      -0.50522,
+      0,
+      -0.02659,
+      -0.02659,
+      0.82
+    ],
+    [
+      -0.48417,
+      0.32,
+      0.14888,
+      -0.21268,
+      0.8
+    ],
+    [
+      -0.44733,
+      0.51,
+      0.30839,
+      -0.37219,
+      0.78
+    ],
+    [
+      -0.37891,
+      0.605,
+      0.40409,
+      -0.47322,
+      0.78
+    ],
+    [
+      -0.26314,
+      0.645,
+      0.46258,
+      -0.5317,
+      0.8
+    ],
+    [
+      -0.10525,
+      0.65,
+      0.48385,
+      -0.56892,
+      0.84
+    ],
+    [
+      0.0842,
+      0.625,
+      0.4679,
+      -0.58487,
+      0.89
+    ],
+    [
+      0.26314,
+      0.55,
+      0.40409,
+      -0.56361,
+      0.94
+    ],
+    [
+      0.41575,
+      0.41,
+      0.29244,
+      -0.47322,
+      1.0
+    ],
+    [
+      0.51574,
+      0.225,
+      0.13293,
+      -0.30839,
+      1.0
+    ],
+    [
+      0.55785,
+      0,
+      -0.06912,
+      -0.06912,
+      1.0
+    ]
+  ],
+  "eye": {
+    "x": 0.24902,
+    "y": -0.11555,
+    "rx": 0.049,
+    "ry": 0.051
+  },
+  "mouthYOffset": 0.05791,
+  "blush": {
+    "x": 0.445,
+    "y": -0.29471,
+    "radius": 0.103
+  },
+  "ear": {
+    "x": 0.46202,
+    "y": 0.48081,
+    "z": -0.05849,
+    "radius": [
+      0.13,
+      0.135,
+      0.1
+    ],
+    "outwardTilt": 0.28,
+    "yaw": 0.2
+  },
+  "cameraFit": {
+    "kind": "bounded joint weak-perspective fit",
+    "shapeFactors": {
+      "height": 1.0525405638818193,
+      "depth": 1.0634078201597028
+    },
+    "limitations": "Manual head bounds; photo stylization and expression differences; rear shape remains uncertain."
+  }
+}
