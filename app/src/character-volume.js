@@ -1,12 +1,13 @@
-import headProfile from './head-profile-r06.json';
+import headProfile from './head-profile-r07.json';
 import * as THREE from 'three';
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 const geometries={},unit=.0085;
 const clay=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.43,metalness:0,...extra});
-const materials={yier:clay('#f5eee3'),bubu:clay('#d99a68'),dark:clay('#42251e',{roughness:.38}),pink:clay('#efaa9c',{roughness:.48}),yellow:clay('#f0bf64',{roughness:.48}),gold:clay('#cba86b',{metalness:.72,roughness:.29}),floor:clay('#292e4c',{roughness:.64}),back:clay('#20213e',{roughness:.65})};
+const materials={yier:clay('#f5eee3'),bubu:new THREE.MeshPhysicalMaterial({color:'#ce7c4e',roughness:.58,metalness:0,specularIntensity:.38}),dark:clay('#42251e',{roughness:.38}),pink:new THREE.MeshPhysicalMaterial({color:'#e99581',roughness:.83,metalness:0,specularIntensity:.12}),yellow:new THREE.MeshPhysicalMaterial({color:'#e9a32e',roughness:.83,metalness:0,specularIntensity:.12}),gold:clay('#cba86b',{metalness:.72,roughness:.29}),floor:clay('#292e4c',{roughness:.64}),back:clay('#20213e',{roughness:.65})};
 // Painted facial ink stays dark under grazing light; ears and feet keep their clay finish.
 materials.ink=new THREE.MeshPhysicalMaterial({color:'#301e1c',roughness:.82,metalness:0,specularIntensity:.12});
+materials.earDark=new THREE.MeshPhysicalMaterial({color:'#2c2727',roughness:.60,metalness:0,specularIntensity:.30});
 const sphere=new THREE.SphereGeometry(1,32,24);
 function ball(parent,mat,x,y,z,sx,sy,sz){const m=new THREE.Mesh(sphere,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
 function mesh(parent,geo,mat,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -52,6 +53,27 @@ const ray=new THREE.Raycaster();
 function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
 // Pigment meshes follow the head surface; their contours do not add button-like volume.
 function facePatch(head,mat,cx,cy,rx,ry=rx){const positions=[cx,cy,faceZ(head,cx,cy)+.0025],uv=[.5,.5],indices=[],segments=48,rings=10;for(let j=1;j<=rings;j++)for(let i=0;i<segments;i++){const a=i/segments*Math.PI*2,u=Math.cos(a)*j/rings,v=Math.sin(a)*j/rings,x=cx+u*rx,y=cy+v*ry;positions.push(x,y,faceZ(head,x,y)+.0025);uv.push(.5+u*.5,.5+v*.5);}for(let i=0;i<segments;i++)indices.push(0,1+i,1+(i+1)%segments);for(let j=1;j<rings;j++)for(let i=0;i<segments;i++){const a=1+(j-1)*segments+i,b=1+(j-1)*segments+(i+1)%segments,c=a+segments,d=b+segments;indices.push(a,c,b,b,c,d);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);g.computeVertexNormals();const m=mesh(head,g,mat);m.castShadow=false;m.receiveShadow=false;m.userData.surfacePatch=true;return m;}
+// A physical circle on the cheek, not a circle in front-view screen coordinates.
+function cheekPatch(head,mat,cx,cy,radius){
+ head.updateMatrixWorld(true);ray.set(new THREE.Vector3(cx,cy,2),new THREE.Vector3(0,0,-1));
+ const centreHit=ray.intersectObject(head,false)[0];
+ if(!centreHit)throw new Error('Cheek centre missed head');
+ const centre=centreHit.point,normal=(centreHit.normal||centreHit.face.normal).clone().normalize();
+ const tangentX=new THREE.Vector3(0,1,0).cross(normal).normalize(),tangentY=normal.clone().cross(tangentX).normalize();
+ const positions=[],normals=[],uv=[],indices=[],segments=64,rings=12;
+ const add=(u,v)=>{
+   const origin=centre.clone().addScaledVector(tangentX,u*radius).addScaledVector(tangentY,v*radius).addScaledVector(normal,.22);
+   ray.set(origin,normal.clone().negate());const hit=ray.intersectObject(head,false)[0];
+   if(!hit)throw new Error('Cheek disk missed head surface');
+   const n=(hit.normal||hit.face.normal).clone().normalize();
+   positions.push(...hit.point.clone().addScaledVector(n,.002).toArray());normals.push(...n.toArray());uv.push((u+1)/2,(v+1)/2);
+ };
+ add(0,0);for(let j=1;j<=rings;j++)for(let i=0;i<segments;i++){const a=i/segments*Math.PI*2;add(Math.cos(a)*j/rings,Math.sin(a)*j/rings);}
+ for(let i=0;i<segments;i++)indices.push(0,1+i,1+(i+1)%segments);
+ for(let j=1;j<rings;j++)for(let i=0;i<segments;i++){const a=1+(j-1)*segments+i,b=1+(j-1)*segments+(i+1)%segments,c=a+segments,d=b+segments;indices.push(a,c,b,b,c,d);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(indices);
+ const patch=mesh(head,g,mat);patch.name='cheek-pigment';patch.castShadow=false;patch.receiveShadow=false;patch.userData.surfacePatch=true;return patch;
+}
 function eye(head,x,y){const mat=materials.ink.clone(),blink={value:1};mat.onBeforeCompile=shader=>{shader.uniforms.paintBlink=blink;shader.vertexShader='varying vec2 vPaintUv;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvPaintUv=uv;');shader.fragmentShader='varying vec2 vPaintUv; uniform float paintBlink;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nvec2 paintP=(vPaintUv-.5)*2.; paintP.y/=max(.025,paintBlink); if(dot(paintP,paintP)>1.)discard;');};mat.customProgramCacheKey=()=> 'paint-eye-R03';const m=facePatch(head,mat,x,y,headProfile.eye.rx,headProfile.eye.ry);m.userData.blink=blink;return m;}
 function mouth(head){const curve=new THREE.CurvePath(),points=[[-.058,-.177],[-.058,-.211],[-.021,-.219],[0,-.193],[.021,-.219],[.058,-.211],[.058,-.177]],p=points.map(([x,y])=>new THREE.Vector3(x,y+headProfile.mouthYOffset,0));curve.add(new THREE.CubicBezierCurve3(p[0],p[1],p[2],p[3]));curve.add(new THREE.CubicBezierCurve3(p[3],p[4],p[5],p[6]));const pos=[],ix=[],steps=80;for(let i=0;i<=steps;i++){const t=i/steps,v=curve.getPoint(t),n=curve.getTangent(t),nx=-n.y*.009,ny=n.x*.009;for(const side of [-1,1]){const x=v.x+nx*side,y=v.y+ny*side;pos.push(x,y,faceZ(head,x,y)+.003);}if(i<steps){const a=i*2;ix.push(a,a+1,a+2,a+1,a+3,a+2);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();const m=mesh(head,g,materials.ink);m.material.side=THREE.DoubleSide;m.castShadow=false;m.receiveShadow=false;m.userData.surfacePatch=true;for(const v of [p[0],p[6]])facePatch(head,materials.ink,v.x,v.y,.009);}
 // Rounded tapered paws: a broad root overlaps the torso, with a small soft fingertip.
@@ -78,11 +100,11 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
      const x=pos.getX(i)*rx,y=pos.getY(i)*ry,z=pos.getZ(i);
      pos.setXYZ(i,x,y,z>=0?frontZ(x,y):z*rz);
    }
-   geo.computeVertexNormals();const e=mesh(head,geo,yi?materials.dark:skin);
+   geo.computeVertexNormals();const e=mesh(head,geo,yi?materials.earDark:skin);
    if(!yi){
-     const shape=new THREE.Shape();shape.moveTo(-.078,-.026);
-     shape.bezierCurveTo(-.081,.095,.081,.095,.078,-.026);
-     shape.quadraticCurveTo(0,.023,-.078,-.026);
+     const shape=new THREE.Shape();
+     // Full inner cup; the overlapping crown hides its base in each view.
+     shape.absellipse(0,0,.084,.094,0,Math.PI*2,false,0);
      let g=new THREE.ShapeGeometry(shape,24).toNonIndexed();
      for(let pass=0;pass<2;pass++){
        const p=g.attributes.position,out=[];
@@ -94,13 +116,13 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
      }
      const p=g.attributes.position;
      for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i)+ep.cup.paintY;p.setXYZ(i,x,y,frontZ(x,y)+.0018);}
-     g.computeVertexNormals();const dark=materials.dark.clone();dark.roughness=.62;
+     g.computeVertexNormals();const dark=materials.earDark.clone();
      const patch=mesh(e,g,dark);patch.castShadow=false;patch.userData.surfacePatch=true;
    }
    e.name=yi?'solid-ear':'cupped-ear';e.position.set(sign*ep.x,ep.y,ep.z);
    e.rotation.z=-sign*ep.outwardTilt;e.rotation.y=sign*ep.yaw;
  }
- const eyes=[];for(const sign of [-1,1]){eyes.push(eye(head,sign*headProfile.eye.x,headProfile.eye.y));facePatch(head,yi?materials.pink:materials.yellow,sign*headProfile.blush.x,headProfile.blush.y,headProfile.blush.radius);}
+ const eyes=[];for(const sign of [-1,1]){eyes.push(eye(head,sign*headProfile.eye.x,headProfile.eye.y));cheekPatch(head,yi?materials.pink:materials.yellow,sign*headProfile.blush.x,headProfile.blush.y,headProfile.blush.radius);}
  mouth(head);headRig.add(head);
  // A recessed neck joins the head underside to the torso without extending the outer silhouette.
  ball(root,skin,0,.685,0,.23,.065,.19);
