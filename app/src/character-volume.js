@@ -44,13 +44,18 @@ function volume(){
 // A soft union of a rounded torso and two leg volumes gives a continuous chest, belly and back.
 // The frontal width and height are normalized to R05; the depth is independently designed.
 function bodyVolume(){
- // Rounded pear-shaped chest and belly, independent of the old flat outline.
- const g=new THREE.SphereGeometry(1,64,48),p=g.attributes.position;
- for(let i=0;i<p.count;i++){
-  const y=p.getY(i),lower=(1-y)/2;
-  p.setXYZ(i,p.getX(i)*(.285+.095*lower),y*.285,p.getZ(i)*(.238+.045*lower)+.035*(1-y*y));
+ // Seated pelvis and forward thighs form one continuous clay surface.
+ const n=80,extent=.8,effect=new MarchingCubes(n,materials.bubu,false,false,60000);effect.isolation=0;
+ const ell=(x,y,z,rx,ry,rz)=>(Math.sqrt((x/rx)**2+(y/ry)**2+(z/rz)**2)-1)*Math.min(rx,ry,rz);
+ const blend=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
+ for(let z=0;z<n;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+  const px=(x/n*2-1)*extent,py=(y/n*2-1)*extent,pz=(z/n*2-1)*extent;
+  const trunk=ell(px,py-.32,pz+.04,.39,.29,.285),hip=ell(px,py-.165,pz+.07,.455,.17,.33);
+  let d=blend(trunk,hip,.09);
+  for(const sign of [-1,1])d=blend(d,ell(px-sign*.355,py-.13,pz-.22,.19,.135,.265),.085);
+  effect.field[z*n*n+y*n+x]=-Math.max(d,.015-py);
  }
- g.computeVertexNormals();return g;
+ effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);g.computeVertexNormals();effect.geometry.dispose();return g;
 }
 const ray=new THREE.Raycaster();
 function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
@@ -85,7 +90,7 @@ function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attr
  for(let i=0;i<p.count;i+=3){let polygon=[0,1,2].map(j=>({p:new THREE.Vector3().fromBufferAttribute(p,i+j),n:new THREE.Vector3().fromBufferAttribute(n,i+j)})),out=[];for(let j=0;j<polygon.length;j++){const a=polygon[j],b=polygon[(j+1)%polygon.length],aIn=below?a.p.y<=cut:a.p.y>=cut,bIn=below?b.p.y<=cut:b.p.y>=cut;if(aIn)out.push(a);if(aIn!==bIn){const t=(cut-a.p.y)/(b.p.y-a.p.y);out.push({p:a.p.clone().lerp(b.p,t),n:a.n.clone().lerp(b.n,t).normalize()});}}for(let j=1;j<out.length-1;j++)for(const v of [out[0],out[j],out[j+1]]){positions.push(...v.p.toArray());normals.push(...v.n.toArray());}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));return g;
 }
-function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.155;
+function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;
  const skin=yi?materials.yier:materials.bubu,head=new THREE.Mesh(geometries.head,skin);head.castShadow=true;head.receiveShadow=true;
  // Build face in head-local space before mounting the head rig.
  const ep=headProfile.ear;
@@ -127,20 +132,17 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  }
  const eyes=[];for(const sign of [-1,1]){eyes.push(eye(head,sign*headProfile.eye.x,headProfile.eye.y));cheekPatch(head,yi?materials.pink:materials.yellow,sign*headProfile.blush.x,headProfile.blush.y,headProfile.blush.radius);}
  mouth(head);headRig.add(head);
- // A recessed neck joins the head underside to the torso without extending the outer silhouette.
- ball(root,skin,0,.685,0,.23,.065,.19);
- mesh(root,geometries.body,skin,0,.405,0).name='chest-belly';
- // Separate rounded feet have depth and heels; no horizontal cut through the torso.
- for(const sign of [-1,1]){
-  const foot=ball(root,yi?materials.earDark:skin,sign*.205,.105,.105,.139,.105,.205);
-  foot.name='foot';foot.rotation.y=sign*.12;
+ mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
+ if(yi)for(const sign of [-1,1]){
+  const foot=ball(root,materials.earDark,sign*.355,.135,.418,.119,.119,.065);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
  }
+ ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(sign*.294,.595,.025);root.add(pivot);
-  const arm=mesh(pivot,pawGeometry(),skin,sign*.022,-.105,.10);arm.scale.set(1.12,1.15,1.12);
-  arm.name='soft-paw';pivot.rotation.z=sign*.12;arms.push(pivot);
+  const pivot=new THREE.Group();pivot.position.set(sign*.32,.455,.13);root.add(pivot);
+  const arm=ball(pivot,skin,-sign*.035,-.045,.115,.125,.104,.185);arm.rotation.y=-sign*.35;
+  arm.name='forward-holding-paw';arms.push(pivot);
  }
- if(yi){const band=mesh(root,new THREE.TorusGeometry(.293,.021,10,48),materials.dark,0,.654,0);band.rotation.x=Math.PI/2;band.scale.y=.72;ball(root,materials.dark,-.045,.594,.224,.049,.065,.023).rotation.z=-.4;ball(root,materials.dark,.045,.594,.224,.049,.065,.023).rotation.z=.4;ball(root,materials.dark,0,.61,.244,.028,.03,.02);}
+ // Seated reference has no added bow tie. Head/body contact hides the shoulder tops.
  return {root,headRig,eyes,arms,setBlink(value){for(const e of eyes)e.userData.blink.value=value;}};
 }
 
