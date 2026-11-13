@@ -50,9 +50,12 @@ function bodyVolume(){
  const blend=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
  for(let z=0;z<n;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++){
   const px=(x/n*2-1)*extent,py=(y/n*2-1)*extent,pz=(z/n*2-1)*extent;
-  const trunk=ell(px,py-.345,pz+.045,.415,.285,.29),hip=ell(px,py-.235,pz+.085,.445,.205,.32);
+  const trunk=ell(px,py-.345,pz+.015,.405,.285,.31),hip=ell(px,py-.235,pz+.085,.435,.205,.32);
   let d=blend(trunk,hip,.065);
-  for(const sign of [-1,1])d=blend(d,ell(px-sign*.355,py-.15,pz-.285,.178,.15,.215),.065);
+  for(const sign of [-1,1]){
+   d=blend(d,ell(px-sign*.33,py-.14,pz-.20,.175,.14,.225),.095);
+   d=blend(d,ell(px-sign*.335,py-.43,pz-.055,.12,.165,.17),.07);
+  }
   effect.field[z*n*n+y*n+x]=-Math.max(d,.008-py);
  }
  effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();return g;
@@ -134,15 +137,15 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  mouth(head);headRig.add(head);
  mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
  if(yi)for(const sign of [-1,1]){
-  const foot=ball(root,materials.earDark,sign*.355,.155,.49,.116,.125,.07);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
+  const foot=ball(root,materials.earDark,sign*.33,.145,.418,.114,.111,.045);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
  }
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(sign*.31,.46,.155);root.add(pivot);
+  const pivot=new THREE.Group();pivot.position.set(sign*.335,.435,.105);root.add(pivot);
   const g=new THREE.SphereGeometry(1,48,32),p=g.attributes.position;
   for(let i=0;i<p.count;i++){
    const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(z+1)/2;
-   p.setXYZ(i,x*(.12-.018*t)-sign*.095*t,y*(.105-.01*t)-.055*t,z*.19+.07);
+   p.setXYZ(i,x*(.12-.025*t)-sign*.13*t,y*(.09-.008*t)-.018*t,z*.18+.055);
   }
   g.computeVertexNormals();const arm=mesh(pivot,g,skin);
   arm.name='forward-holding-paw';arms.push(pivot);
