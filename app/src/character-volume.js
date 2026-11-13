@@ -45,17 +45,17 @@ function volume(){
 // The frontal width and height are normalized to R05; the depth is independently designed.
 function bodyVolume(){
  // Seated pelvis and forward thighs form one continuous clay surface.
- const n=80,extent=.8,effect=new MarchingCubes(n,materials.bubu,false,false,60000);effect.isolation=0;
+ const n=104,extent=.8,effect=new MarchingCubes(n,materials.bubu,false,false,60000);effect.isolation=0;
  const ell=(x,y,z,rx,ry,rz)=>(Math.sqrt((x/rx)**2+(y/ry)**2+(z/rz)**2)-1)*Math.min(rx,ry,rz);
  const blend=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
  for(let z=0;z<n;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++){
   const px=(x/n*2-1)*extent,py=(y/n*2-1)*extent,pz=(z/n*2-1)*extent;
-  const trunk=ell(px,py-.32,pz+.04,.39,.29,.285),hip=ell(px,py-.165,pz+.07,.455,.17,.33);
-  let d=blend(trunk,hip,.09);
-  for(const sign of [-1,1])d=blend(d,ell(px-sign*.355,py-.13,pz-.22,.19,.135,.265),.085);
-  effect.field[z*n*n+y*n+x]=-Math.max(d,.015-py);
+  const trunk=ell(px,py-.345,pz+.045,.415,.285,.29),hip=ell(px,py-.235,pz+.085,.445,.205,.32);
+  let d=blend(trunk,hip,.065);
+  for(const sign of [-1,1])d=blend(d,ell(px-sign*.355,py-.15,pz-.285,.178,.15,.215),.045);
+  effect.field[z*n*n+y*n+x]=-Math.max(d,.008-py);
  }
- effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);g.computeVertexNormals();effect.geometry.dispose();return g;
+ effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();return g;
 }
 const ray=new THREE.Raycaster();
 function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
@@ -134,12 +134,12 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  mouth(head);headRig.add(head);
  mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
  if(yi)for(const sign of [-1,1]){
-  const foot=ball(root,materials.earDark,sign*.355,.135,.49,.125,.122,.075);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
+  const foot=ball(root,materials.earDark,sign*.355,.155,.49,.116,.125,.07);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
  }
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(sign*.32,.455,.13);root.add(pivot);
-  const arm=ball(pivot,skin,-sign*.035,-.045,.115,.125,.104,.185);arm.rotation.y=-sign*.35;
+  const pivot=new THREE.Group();pivot.position.set(sign*.31,.46,.155);root.add(pivot);
+  const arm=ball(pivot,skin,-sign*.045,-.048,.105,.125,.118,.16);arm.rotation.y=-sign*.58;
   arm.name='forward-holding-paw';arms.push(pivot);
  }
  // Seated reference has no added bow tie. Head/body contact hides the shoulder tops.
