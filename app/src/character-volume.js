@@ -43,11 +43,14 @@ function volume(){
 }
 // A soft union of a rounded torso and two leg volumes gives a continuous chest, belly and back.
 // The frontal width and height are normalized to R05; the depth is independently designed.
-function bodyVolume(outline,depth){const res=72,extent=.65,effect=new MarchingCubes(res,materials.bubu,false,false,40000);effect.isolation=0;
- const ellipsoid=(x,y,z,rx,ry,rz)=>((Math.pow(Math.abs(x/rx),2.5)+Math.pow(Math.abs(y/ry),2.5))**.8+(z/rz)**2-1)*Math.min(rx,ry,rz)*.5;
- const softmin=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
- for(let z=0;z<res;z++)for(let y=0;y<res;y++)for(let x=0;x<res;x++){const px=(x/res*2-1)*extent,py=(y/res*2-1)*extent,pz=(z/res*2-1)*extent;const torso=ellipsoid(px,py-.025,pz-.015,.397,.31,depth),left=ellipsoid(px+.233,py+.263,pz-.045,.126,.115,depth*.71),right=ellipsoid(px-.233,py+.263,pz-.045,.126,.115,depth*.71);effect.field[z*res*res+y*res+x]=-softmin(softmin(torso,left,.065),right,.065);}
- effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();g.computeBoundingBox();const box=g.boundingBox,centre=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3()),minX=Math.min(...outline.map(v=>v.x)),maxX=Math.max(...outline.map(v=>v.x)),minY=Math.min(...outline.map(v=>v.y)),maxY=Math.max(...outline.map(v=>v.y));g.translate(-centre.x,-centre.y,0);g.scale((maxX-minX)/size.x,(maxY-minY)/size.y,1);g.translate((minX+maxX)/2,(minY+maxY)/2,0);return g;
+function bodyVolume(){
+ // Rounded pear-shaped chest and belly, independent of the old flat outline.
+ const g=new THREE.SphereGeometry(1,64,48),p=g.attributes.position;
+ for(let i=0;i<p.count;i++){
+  const y=p.getY(i),lower=(1-y)/2;
+  p.setXYZ(i,p.getX(i)*(.285+.095*lower),y*.285,p.getZ(i)*(.238+.045*lower)+.035*(1-y*y));
+ }
+ g.computeVertexNormals();return g;
 }
 const ray=new THREE.Raycaster();
 function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
@@ -126,8 +129,17 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  mouth(head);headRig.add(head);
  // A recessed neck joins the head underside to the torso without extending the outer silhouette.
  ball(root,skin,0,.685,0,.23,.065,.19);
- if(yi){if(!geometries.shoe){geometries.bodyWhite=sliceBody(geometries.body,-.28,false);geometries.shoe=sliceBody(geometries.body,-.28,true);}mesh(root,geometries.bodyWhite,skin,0,.345,0);mesh(root,geometries.shoe,materials.dark,0,.345,0);}else mesh(root,geometries.body,skin,0,.345,0);
- const arms=[];for(const sign of [-1,1]){const pivot=new THREE.Group();pivot.position.set(sign*.355,.595,.04);root.add(pivot);const arm=mesh(pivot,pawGeometry(),skin,0,-.09,.075);pivot.rotation.z=sign*.10;arms.push(pivot);}
+ mesh(root,geometries.body,skin,0,.405,0).name='chest-belly';
+ // Separate rounded feet have depth and heels; no horizontal cut through the torso.
+ for(const sign of [-1,1]){
+  const foot=ball(root,yi?materials.earDark:skin,sign*.205,.105,.105,.139,.105,.205);
+  foot.name='foot';foot.rotation.y=sign*.12;
+ }
+ const arms=[];for(const sign of [-1,1]){
+  const pivot=new THREE.Group();pivot.position.set(sign*.294,.595,.025);root.add(pivot);
+  const arm=mesh(pivot,pawGeometry(),skin,sign*.022,-.105,.10);arm.scale.set(1.12,1.15,1.12);
+  arm.name='soft-paw';pivot.rotation.z=sign*.12;arms.push(pivot);
+ }
  if(yi){const band=mesh(root,new THREE.TorusGeometry(.293,.021,10,48),materials.dark,0,.654,0);band.rotation.x=Math.PI/2;band.scale.y=.72;ball(root,materials.dark,-.045,.594,.224,.049,.065,.023).rotation.z=-.4;ball(root,materials.dark,.045,.594,.224,.049,.065,.023).rotation.z=.4;ball(root,materials.dark,0,.61,.244,.028,.03,.02);}
  return {root,headRig,eyes,arms,setBlink(value){for(const e of eyes)e.userData.blink.value=value;}};
 }
