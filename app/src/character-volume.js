@@ -52,7 +52,7 @@ function bodyVolume(){
   const px=(x/n*2-1)*extent,py=(y/n*2-1)*extent,pz=(z/n*2-1)*extent;
   const trunk=ell(px,py-.345,pz+.045,.415,.285,.29),hip=ell(px,py-.235,pz+.085,.445,.205,.32);
   let d=blend(trunk,hip,.065);
-  for(const sign of [-1,1])d=blend(d,ell(px-sign*.355,py-.15,pz-.285,.178,.15,.215),.045);
+  for(const sign of [-1,1])d=blend(d,ell(px-sign*.355,py-.15,pz-.285,.178,.15,.215),.065);
   effect.field[z*n*n+y*n+x]=-Math.max(d,.008-py);
  }
  effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();return g;
@@ -90,7 +90,7 @@ function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attr
  for(let i=0;i<p.count;i+=3){let polygon=[0,1,2].map(j=>({p:new THREE.Vector3().fromBufferAttribute(p,i+j),n:new THREE.Vector3().fromBufferAttribute(n,i+j)})),out=[];for(let j=0;j<polygon.length;j++){const a=polygon[j],b=polygon[(j+1)%polygon.length],aIn=below?a.p.y<=cut:a.p.y>=cut,bIn=below?b.p.y<=cut:b.p.y>=cut;if(aIn)out.push(a);if(aIn!==bIn){const t=(cut-a.p.y)/(b.p.y-a.p.y);out.push({p:a.p.clone().lerp(b.p,t),n:a.n.clone().lerp(b.n,t).normalize()});}}for(let j=1;j<out.length-1;j++)for(const v of [out[0],out[j],out[j+1]]){positions.push(...v.p.toArray());normals.push(...v.n.toArray());}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));return g;
 }
-function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;
+function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;headRig.rotation.x=THREE.MathUtils.degToRad(4);
  const skin=yi?materials.yier:materials.bubu,head=new THREE.Mesh(geometries.head,skin);head.castShadow=true;head.receiveShadow=true;
  // Build face in head-local space before mounting the head rig.
  const ep=headProfile.ear;
@@ -139,7 +139,12 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
   const pivot=new THREE.Group();pivot.position.set(sign*.31,.46,.155);root.add(pivot);
-  const arm=ball(pivot,skin,-sign*.045,-.048,.105,.125,.118,.16);arm.rotation.y=-sign*.58;
+  const g=new THREE.SphereGeometry(1,48,32),p=g.attributes.position;
+  for(let i=0;i<p.count;i++){
+   const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(z+1)/2;
+   p.setXYZ(i,x*(.12-.018*t)-sign*.095*t,y*(.105-.01*t)-.055*t,z*.19+.07);
+  }
+  g.computeVertexNormals();const arm=mesh(pivot,g,skin);
   arm.name='forward-holding-paw';arms.push(pivot);
  }
  // Seated reference has no added bow tie. Head/body contact hides the shoulder tops.
