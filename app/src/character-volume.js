@@ -134,7 +134,7 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  mouth(head);headRig.add(head);
  mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
  if(yi)for(const sign of [-1,1]){
-  const foot=ball(root,materials.earDark,sign*.355,.135,.418,.119,.119,.065);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
+  const foot=ball(root,materials.earDark,sign*.355,.135,.49,.125,.122,.075);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
  }
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
