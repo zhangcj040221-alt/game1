@@ -1,0 +1,475 @@
+{
+  "ready": true,
+  "viewCount": 12,
+  "version": "volume-reference-R07",
+  "headStudy": [
+    {
+      "id": "standing-bubu",
+      "file": "IMG_5507(2).jpeg",
+      "crop": [
+        680,
+        475,
+        1020,
+        760
+      ],
+      "eyes": [
+        [
+          731.7,
+          642.9
+        ],
+        [
+          827.6,
+          649.2
+        ]
+      ],
+      "ears": [
+        [
+          757.6,
+          500.3
+        ],
+        [
+          934.5,
+          511.1
+        ]
+      ],
+      "bbox": [
+        701,
+        489,
+        1000,
+        734
+      ],
+      "init": [
+        35,
+        5,
+        0,
+        250,
+        850,
+        620
+      ],
+      "camera": {
+        "yaw": 36.775,
+        "pitch": 1.377,
+        "roll": -2.607,
+        "scale": 237.517,
+        "tx": 847.302,
+        "ty": 619.512
+      },
+      "note": "Inherited R04 viewing estimate, reused identically for R05/R06; historical fit error does not measure R06 agreement.",
+      "label": "拿相机的布布 · 低机位",
+      "character": "bubu",
+      "historicalR04Fit": {
+        "landmarkRmsPixels": 0.68,
+        "projectedLandmarks": [
+          [
+            733.2160531267382,
+            643.0379469844731
+          ],
+          [
+            827.7905783584,
+            649.049104758318
+          ],
+          [
+            758.2539529062709,
+            499.7995585477048
+          ],
+          [
+            933.727826502578,
+            510.9526797163424
+          ]
+        ],
+        "observedLandmarks": [
+          [
+            731.7,
+            642.9
+          ],
+          [
+            827.6,
+            649.2
+          ],
+          [
+            757.6,
+            500.3
+          ],
+          [
+            934.5,
+            511.1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "riding-bubu-a",
+      "file": "IMG_5509(2).jpeg",
+      "crop": [
+        685,
+        250,
+        1005,
+        520
+      ],
+      "eyes": [
+        [
+          751.9,
+          424
+        ],
+        [
+          831.2,
+          447
+        ]
+      ],
+      "ears": [
+        [
+          766.1,
+          286.3
+        ],
+        [
+          915.1,
+          326.5
+        ]
+      ],
+      "bbox": [
+        719,
+        276,
+        965,
+        504
+      ],
+      "init": [
+        30,
+        24,
+        -10,
+        205,
+        840,
+        400
+      ],
+      "camera": {
+        "yaw": 32.627,
+        "pitch": 20.514,
+        "roll": -2.736,
+        "scale": 193.943,
+        "tx": 841.568,
+        "ty": 390.951
+      },
+      "note": "Inherited R04 viewing estimate, reused identically for R05/R06; historical fit error does not measure R06 agreement.",
+      "label": "骑坐布布 · 俯视第一方向",
+      "character": "bubu",
+      "historicalR04Fit": {
+        "landmarkRmsPixels": 0.54,
+        "projectedLandmarks": [
+          [
+            750.9862044397739,
+            424.9047609530423
+          ],
+          [
+            831.3695242069651,
+            447.01678388856
+          ],
+          [
+            766.2637742433353,
+            285.58811334919034
+          ],
+          [
+            915.4072402827237,
+            326.61483072410033
+          ]
+        ],
+        "observedLandmarks": [
+          [
+            751.9,
+            424
+          ],
+          [
+            831.2,
+            447
+          ],
+          [
+            766.1,
+            286.3
+          ],
+          [
+            915.1,
+            326.5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "riding-bubu-b",
+      "file": "IMG_5510(2).jpeg",
+      "crop": [
+        415,
+        640,
+        715,
+        925
+      ],
+      "eyes": [
+        [
+          569.1,
+          842.5
+        ],
+        [
+          648.3,
+          820.1
+        ]
+      ],
+      "ears": [
+        [
+          485.5,
+          715.8
+        ],
+        [
+          633.2,
+          675.2
+        ]
+      ],
+      "bbox": [
+        436,
+        664,
+        679,
+        900
+      ],
+      "init": [
+        -30,
+        25,
+        12,
+        205,
+        550,
+        780
+      ],
+      "camera": {
+        "yaw": -35.68,
+        "pitch": 21.897,
+        "roll": 0.613,
+        "scale": 199.01,
+        "tx": 555.279,
+        "ty": 782.361
+      },
+      "note": "Inherited R04 viewing estimate, reused identically for R05/R06; historical fit error does not measure R06 agreement.",
+      "label": "骑坐布布 · 俯视反方向",
+      "character": "bubu",
+      "historicalR04Fit": {
+        "landmarkRmsPixels": 0.73,
+        "projectedLandmarks": [
+          [
+            569.1510383825233,
+            842.1113124857349
+          ],
+          [
+            649.4239693949214,
+            819.6920092016195
+          ],
+          [
+            485.1968351050848,
+            717.0827419067815
+          ],
+          [
+            634.1354854992709,
+            675.4858956000437
+          ]
+        ],
+        "observedLandmarks": [
+          [
+            569.1,
+            842.5
+          ],
+          [
+            648.3,
+            820.1
+          ],
+          [
+            485.5,
+            715.8
+          ],
+          [
+            633.2,
+            675.2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "standing-yier",
+      "file": "IMG_5507(2).jpeg",
+      "label": "抱爱心的一二 · 接近正面",
+      "character": "yier",
+      "crop": [
+        280,
+        470,
+        595,
+        745
+      ],
+      "camera": {
+        "yaw": -3,
+        "pitch": 2,
+        "roll": 0,
+        "scale": 222,
+        "tx": 439,
+        "ty": 610
+      },
+      "note": "Manual viewing estimate; wink and mouth expression excluded."
+    },
+    {
+      "id": "riding-yier",
+      "file": "IMG_5509(2).jpeg",
+      "label": "骑鳄鱼的一二 · 俯视",
+      "character": "yier",
+      "crop": [
+        710,
+        715,
+        1030,
+        1025
+      ],
+      "camera": {
+        "yaw": 33,
+        "pitch": 26,
+        "roll": -5,
+        "scale": 210,
+        "tx": 875,
+        "ty": 880
+      },
+      "note": "Manual viewing estimate; head pitch and camera elevation are not separately calibrated."
+    }
+  ],
+  "colourStudy": [
+    {
+      "id": "legacy",
+      "albedo": "#d99a68",
+      "foreheadMedianRGB": [
+        233,
+        204,
+        169
+      ],
+      "flat": false,
+      "legacyLights": true
+    },
+    {
+      "id": "light-only",
+      "albedo": "#d99a68",
+      "foreheadMedianRGB": [
+        226,
+        196,
+        165
+      ],
+      "flat": false,
+      "legacyLights": false
+    },
+    {
+      "id": "revised",
+      "albedo": "#ce7c4e",
+      "foreheadMedianRGB": [
+        223,
+        160,
+        110
+      ],
+      "flat": false,
+      "legacyLights": false
+    },
+    {
+      "id": "albedo",
+      "albedo": "#ce7c4e",
+      "foreheadMedianRGB": [
+        206,
+        124,
+        78
+      ],
+      "flat": true,
+      "legacyLights": false
+    }
+  ],
+  "status": "待审核，不能替代已确认基准",
+  "cardYawDegrees": {
+    "min": -20,
+    "max": 20
+  },
+  "projection": "orthographic",
+  "pose": "统一中性站姿，无动画、无动作形变",
+  "geometrySource": "头部由照片多角度观察与独立曲面控制点构建；R05 不再作为三维截面；躯干沿用 R03 仅作占位",
+  "volumeReference": "IMG_5511(1).jpeg 与 IMG_5507(2)、5508(2)、5509(2)、5510(2)：站姿观察胸腹肩手，俯视和侧躺交叉检查头部；照片不作为正交尺寸标尺",
+  "materialSource": "已确认 B 版软陶正面；当前三维灯光下的颜色是试稿",
+  "angles": [
+    {
+      "degrees": 0,
+      "label": "正面",
+      "cardView": true
+    },
+    {
+      "degrees": -20,
+      "label": "左观察 20°",
+      "cardView": true
+    },
+    {
+      "degrees": 20,
+      "label": "右观察 20°",
+      "cardView": true
+    },
+    {
+      "degrees": 45,
+      "label": "三分之四视角",
+      "cardView": false
+    },
+    {
+      "degrees": 90,
+      "label": "右侧面",
+      "cardView": false
+    },
+    {
+      "degrees": 180,
+      "label": "背面",
+      "cardView": false
+    }
+  ],
+  "dimensions": {
+    "yier": {
+      "总高度": 133.8,
+      "头部宽度": 100,
+      "头部高度": 81.5,
+      "头部厚度": 89,
+      "躯干宽度": 62.6,
+      "躯干高度": 53.8,
+      "躯干厚度": 46,
+      "耳朵厚度": 12.7
+    },
+    "bubu": {
+      "总高度": 134.8,
+      "头部宽度": 100,
+      "头部高度": 81.5,
+      "头部厚度": 89,
+      "躯干宽度": 62.6,
+      "躯干高度": 53.8,
+      "躯干厚度": 46,
+      "耳朵厚度": 11.4
+    }
+  },
+  "parameters": {
+    "unit": 0.0085,
+    "headSurfaceVersion": "independent-sections-R07",
+    "bodyHalfDepth": 0.3,
+    "bodySurfaceExponent": 2.5,
+    "shoeTopHeight": 0.065,
+    "bodySurface": "胸腹与双腿的连续融合体积",
+    "earHalfDepth": {
+      "yier": 0.083,
+      "bubu": 0.074
+    },
+    "headSurface": "独立额头、侧颊、后脑和下颌截面，多角度估计机位核对",
+    "headOrigin": [
+      81.5,
+      89.5
+    ],
+    "bodyOrigin": [
+      81.5,
+      184
+    ]
+  },
+  "pending": [
+    "头部厚度与前后弧度",
+    "背面结构与有无额外辨识元素",
+    "耳根、肩根连接",
+    "一二鞋后跟与布布脚部体积",
+    "正面试稿对已确认基准的贴合程度"
+  ],
+  "retained": [
+    "共用体型和眼睛嘴巴",
+    "一二颈带、领结与独立鞋子",
+    "布布深色内耳、同色脚部",
+    "清晰圆形脸红边界"
+  ]
+}
