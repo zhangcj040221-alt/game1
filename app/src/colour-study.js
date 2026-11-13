@@ -17,7 +17,7 @@ export async function renderColourStudy(renderer){
   const temporary=[];
   for(const [object,mat] of original){
    object.material=entry.old?(mapping.get(mat)||mat):mat;
-   if(entry.flat){object.material=new THREE.MeshBasicMaterial({color:mat.color});temporary.push(object.material);}
+   if(entry.flat){object.material=new THREE.MeshBasicMaterial({color:mat.color,side:mat.side});temporary.push(object.material);}
   }
   const scene=new THREE.Scene();scene.background=new THREE.Color('#f0ece6');scene.add(head);if(!entry.flat)addSculptLights(scene,entry.legacy);
   renderer.toneMapping=entry.flat?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=entry.legacy?1.08:1;
