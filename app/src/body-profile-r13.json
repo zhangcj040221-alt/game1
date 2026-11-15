@@ -1,0 +1,21 @@
+{
+  "version": "R13-seated-leg-splay",
+  "leg": {
+    "centreX": 0.31,
+    "centreY": 0.135,
+    "centreZ": 0.18,
+    "radiusX": 0.118,
+    "radiusY": 0.125,
+    "radiusZ": 0.23,
+    "splayDegrees": 32,
+    "blend": 0.045
+  },
+  "footTip": {
+    "x": 0.425,
+    "y": 0.14,
+    "z": 0.365,
+    "rx": 0.102,
+    "ry": 0.105,
+    "rz": 0.043
+  }
+}

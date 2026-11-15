@@ -1,3 +1,4 @@
+import bodyProfile from './body-profile-r13.json';
 import headProfile from './head-profile-r07.json';
 import * as THREE from 'three';
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
@@ -53,7 +54,9 @@ function bodyVolume(){
   const trunk=ell(px,py-.345,pz+.015,.405,.285,.31),hip=ell(px,py-.235,pz+.085,.435,.205,.32);
   let d=blend(trunk,hip,.065);
   for(const sign of [-1,1]){
-   d=blend(d,ell(px-sign*.33,py-.14,pz-.20,.175,.14,.225),.095);
+   const l=bodyProfile.leg,a=sign*THREE.MathUtils.degToRad(l.splayDegrees),dx=px-sign*l.centreX,dz=pz-l.centreZ;
+   const across=Math.cos(a)*dx-Math.sin(a)*dz,along=Math.sin(a)*dx+Math.cos(a)*dz;
+   d=blend(d,ell(across,py-l.centreY,along,l.radiusX,l.radiusY,l.radiusZ),l.blend);
    d=blend(d,ell(px-sign*.335,py-.43,pz-.055,.12,.165,.17),.07);
   }
   effect.field[z*n*n+y*n+x]=-Math.max(d,.008-py);
@@ -137,7 +140,7 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  mouth(head);headRig.add(head);
  mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
  if(yi)for(const sign of [-1,1]){
-  const foot=ball(root,materials.earDark,sign*.33,.145,.418,.114,.111,.045);foot.name='dark-foot-tip';foot.rotation.y=sign*.16;
+  const f=bodyProfile.footTip,foot=ball(root,materials.earDark,sign*f.x,f.y,f.z,f.rx,f.ry,f.rz);foot.name='dark-foot-tip';foot.rotation.y=sign*THREE.MathUtils.degToRad(bodyProfile.leg.splayDegrees);
  }
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
