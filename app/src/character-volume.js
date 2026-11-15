@@ -57,7 +57,7 @@ function bodyVolume(){
    const l=bodyProfile.leg,a=sign*THREE.MathUtils.degToRad(l.splayDegrees),dx=px-sign*l.centreX,dz=pz-l.centreZ;
    const across=Math.cos(a)*dx-Math.sin(a)*dz,along=Math.sin(a)*dx+Math.cos(a)*dz;
    d=blend(d,ell(across,py-l.centreY,along,l.radiusX,l.radiusY,l.radiusZ),l.blend);
-   d=blend(d,ell(px-sign*.335,py-.43,pz-.055,.12,.165,.17),.07);
+   d=blend(d,ell(px-sign*.31,py-.475,pz-.035,.09,.12,.125),.075);
   }
   effect.field[z*n*n+y*n+x]=-Math.max(d,.008-py);
  }
@@ -144,11 +144,11 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  }
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(sign*.335,.435,.105);root.add(pivot);
+  const pivot=new THREE.Group();pivot.position.set(sign*.335,.49,.045);root.add(pivot);
   const g=new THREE.SphereGeometry(1,48,32),p=g.attributes.position;
   for(let i=0;i<p.count;i++){
    const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(z+1)/2;
-   p.setXYZ(i,x*(.12-.025*t)-sign*.13*t,y*(.09-.008*t)-.018*t,z*.18+.055);
+   p.setXYZ(i,x*(.115-.012*t)-sign*.085*t*t,y*(.11-.008*t)-.09*t,z*.25+.13);
   }
   g.computeVertexNormals();const arm=mesh(pivot,g,skin);
   arm.name='forward-holding-paw';arms.push(pivot);
