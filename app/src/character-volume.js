@@ -144,11 +144,15 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  }
  ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
  const arms=[];for(const sign of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(sign*.305,.475,.035);root.add(pivot);
+  const pivot=new THREE.Group();pivot.position.set(sign*.27,.48,.015);root.add(pivot);
   const g=new THREE.SphereGeometry(1,48,32),p=g.attributes.position;
   for(let i=0;i<p.count;i++){
    const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(z+1)/2;
-   p.setXYZ(i,x*(.125-.022*t)-sign*.055*t*t,y*(.11-.008*t)-.09*t,z*.25+.13);
+   // Quadratic shoulder -> elbow -> palm path, with rounded embedded caps.
+   const cx=sign*(2*(1-t)*t*.12-t*t*.035);
+   const cy=2*(1-t)*t*(-.105)+t*t*(-.105);
+   const cz=2*(1-t)*t*.12+t*t*.37;
+   p.setXYZ(i,cx+x*(.112-.012*t),cy+y*(.105-.012*t),cz);
   }
   g.computeVertexNormals();const arm=mesh(pivot,g,skin);
   arm.name='forward-holding-paw';arms.push(pivot);
