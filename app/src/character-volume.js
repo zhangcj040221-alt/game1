@@ -62,7 +62,8 @@ function bodyVolume(){
   // The abdominal arc is confined to the front. Keep the broad pelvic
   // support at the back, rounding the lower belly in towards the seat.
   const localZ=pz+.045+.02*hip;
-  const abdomen=.052*Math.exp(-(((py-.245)/.119)**2))-.032*(1-THREE.MathUtils.smoothstep(py,.04,.16));
+  const centreWeight=Math.exp(-((px/.27)**2));
+  const abdomen=centreWeight*(.035*Math.exp(-(((py-.225)/.155)**2))-.015*(1-THREE.MathUtils.smoothstep(py,.025,.16)));
   const sectionDepth=localZ>0?depth+abdomen:depth;
   let d=.305*(Math.sqrt((px/width)**2+(localZ/sectionDepth)**2+vertical)-1);
   for(const sign of [-1,1]){
@@ -161,8 +162,8 @@ function holdingArm(sign){
  const path=new THREE.CubicBezierCurve3(
   new THREE.Vector3(-sign*.106,-.007,0),
   new THREE.Vector3(-sign*.036,-.074,.095),
-  new THREE.Vector3(sign*.037,-.135,.246),
-  new THREE.Vector3(-sign*.082,-.133,.331)
+  new THREE.Vector3(sign*.028,-.135,.246),
+  new THREE.Vector3(-sign*.119,-.122,.338)
  );
  const rows=32,sides=48,positions=path.v0.toArray(),indices=[];
  const tangent=new THREE.Vector3(),across=new THREE.Vector3(),up=new THREE.Vector3(),centre=new THREE.Vector3();
