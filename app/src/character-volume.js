@@ -59,7 +59,12 @@ function bodyVolume(){
   const width=.405-.045*THREE.MathUtils.clamp(height,-1,1)+.043*hip;
   const depth=.325+.035*hip;
   const vertical=height<0?height**4:height**2;
-  let d=.305*(Math.sqrt((px/width)**2+((pz+.045+.02*hip)/depth)**2+vertical)-1);
+  // The abdominal arc is confined to the front. Keep the broad pelvic
+  // support at the back, rounding the lower belly in towards the seat.
+  const localZ=pz+.045+.02*hip;
+  const abdomen=.052*Math.exp(-(((py-.245)/.119)**2))-.032*(1-THREE.MathUtils.smoothstep(py,.04,.16));
+  const sectionDepth=localZ>0?depth+abdomen:depth;
+  let d=.305*(Math.sqrt((px/width)**2+(localZ/sectionDepth)**2+vertical)-1);
   for(const sign of [-1,1]){
    const l=bodyProfile.leg,a=sign*THREE.MathUtils.degToRad(l.splayDegrees),dx=px-sign*l.centreX,dz=pz-l.centreZ;
    const across=Math.cos(a)*dx-Math.sin(a)*dz,along=Math.sin(a)*dx+Math.cos(a)*dz;
@@ -150,6 +155,42 @@ function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attr
  for(let i=0;i<p.count;i+=3){let polygon=[0,1,2].map(j=>({p:new THREE.Vector3().fromBufferAttribute(p,i+j),n:new THREE.Vector3().fromBufferAttribute(n,i+j)})),out=[];for(let j=0;j<polygon.length;j++){const a=polygon[j],b=polygon[(j+1)%polygon.length],aIn=below?a.p.y<=cut:a.p.y>=cut,bIn=below?b.p.y<=cut:b.p.y>=cut;if(aIn)out.push(a);if(aIn!==bIn){const t=(cut-a.p.y)/(b.p.y-a.p.y);out.push({p:a.p.clone().lerp(b.p,t),n:a.n.clone().lerp(b.n,t).normalize()});}}for(let j=1;j<out.length-1;j++)for(const v of [out[0],out[j],out[j+1]]){positions.push(...v.p.toArray());normals.push(...v.n.toArray());}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));return g;
 }
+// Sweep elliptical sections perpendicular to the bent arm so the rounded
+// palm keeps its thickness in both front and profile views.
+function holdingArm(sign){
+ const path=new THREE.CubicBezierCurve3(
+  new THREE.Vector3(-sign*.106,-.007,0),
+  new THREE.Vector3(-sign*.036,-.074,.095),
+  new THREE.Vector3(sign*.037,-.135,.246),
+  new THREE.Vector3(-sign*.082,-.133,.331)
+ );
+ const rows=32,sides=48,positions=path.v0.toArray(),indices=[];
+ const tangent=new THREE.Vector3(),across=new THREE.Vector3(),up=new THREE.Vector3(),centre=new THREE.Vector3();
+ for(let j=1;j<rows;j++){
+  const angle=Math.PI*j/rows,t=(1-Math.cos(angle))/2,radius=Math.sin(angle);
+  path.getPoint(t,centre);path.getTangent(t,tangent);
+  across.set(tangent.z,0,-tangent.x).normalize();up.crossVectors(tangent,across);
+  const palm=THREE.MathUtils.smoothstep(t,.45,.88);
+  for(let i=0;i<sides;i++){
+   const a=2*Math.PI*i/sides;
+   const x=Math.cos(a)*radius*(.107+.009*palm),y=Math.sin(a)*radius*(.110-.012*palm);
+   positions.push(centre.x+x*across.x+y*up.x,centre.y+y*up.y,centre.z+x*across.z+y*up.z);
+  }
+ }
+ const tip=positions.length/3,last=tip-sides;
+ positions.push(...path.v3.toArray());
+ for(let i=0;i<sides;i++){
+  const next=(i+1)%sides;
+  indices.push(0,1+next,1+i,last+i,last+next,tip);
+  for(let j=0;j<rows-2;j++){
+   const a=1+j*sides+i,b=1+j*sides+next;
+   indices.push(a,b,a+sides,b,b+sides,a+sides);
+  }
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geo.setIndex(indices);geo.computeVertexNormals();return geo;
+}
 function character(yi,{openMouth=false,wink=false}={}){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;
  const skin=yi?materials.yier:materials.bubu,head=new THREE.Mesh(geometries.head,skin);head.castShadow=true;head.receiveShadow=true;
  // Build face in head-local space before mounting the head rig.
@@ -207,20 +248,8 @@ function character(yi,{openMouth=false,wink=false}={}){const root=new THREE.Grou
  ball(root,skin,0,.110,-.398,.088,.083,.084).name='tail';
  const arms=[];for(const sign of [-1,1]){
   const pivot=new THREE.Group();pivot.position.set(sign*.27,.48,.015);root.add(pivot);
-  const g=new THREE.SphereGeometry(1,48,32),p=g.attributes.position;
-  for(let i=0;i<p.count;i++){
-   const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(z+1)/2;
-   // Quadratic shoulder -> elbow -> palm path, with rounded embedded caps.
-   // Seat the shoulder inside the ribcage. Ease back onto the original
-   // palm path as the arm clears the front of the belly.
-   const shoulderInset=.106*(1-THREE.MathUtils.smoothstep(t,.46,.94));
-   const palm=THREE.MathUtils.smoothstep(t,.48,1);
-   const cx=sign*(2*(1-t)*t*.12-t*t*.035-shoulderInset-.105*palm);
-   const cy=2*(1-t)*t*(-.105)+t*t*(-.105);
-   const cz=2*(1-t)*t*.12+t*t*.37;
-   p.setXYZ(i,cx+x*(.112-.012*t),cy+y*(.105-.012*t-.018*palm),cz);
-  }
-  g.computeVertexNormals();const arm=mesh(pivot,g,skin);
+  const key=sign<0?'leftHoldingArm':'rightHoldingArm';
+  const arm=mesh(pivot,geometries[key]??=holdingArm(sign),skin);
   arm.name='forward-holding-paw';arms.push(pivot);
  }
  // Seated reference has no added bow tie. Head/body contact hides the shoulder tops.
