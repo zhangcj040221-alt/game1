@@ -16,11 +16,11 @@ const server = await createServer({
     name: 'inspect-story-frame', enforce: 'pre',
     transform(source, id) {
       if (!id.endsWith('/src/compare.js')) return;
-      for (const fragment of ['requestAnimationFrame(frame);', '((p-.5)*9)']) {
+      for (const fragment of ['requestAnimationFrame(frame);']) {
         if (!source.includes(fragment)) throw new Error('Card animation changed. Check the review adapter.');
       }
       return source.replace('requestAnimationFrame(frame);', '')
-        .replace('((p-.5)*9)', 'window.reviewYaw') +
+        +
         '\nwindow.inspectCard = {views,state,setProgress,frame,character,THREE};';
     }
   }]
@@ -32,7 +32,7 @@ try {
   if (process.env.CI) launchOptions.channel = 'chrome';
   browser = await chromium.launch(launchOptions);
   const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
-  await page.addInitScript(() => { window.reviewYaw = 0; });
+
   await page.goto(server.resolvedUrls.local[0]+'compare.html');
   await page.waitForFunction(() => window.__comparison?.getState().ready, null, {timeout:90000});
   const stage = page.locator('#scene-b');
@@ -48,7 +48,7 @@ try {
     const standing = character(false, {pose:'standing'});
     const rect = v.host.getBoundingClientRect();
     const width = rect.width, height = rect.height;
-    const frames = [30,68,100];
+    const frames = [30,60,100];
     const angles = [-20,0,20];
     const result = {viewport:[innerWidth,innerHeight],card:[width,height],frames,angles,poses:{}};
     v.gift.geometry.computeBoundingBox();
@@ -56,7 +56,7 @@ try {
     result.starWidth = starWidth;
 
     function place(progress, yaw) {
-      window.reviewYaw = yaw;
+      state.storyAngle = yaw;
       v.yaw = THREE.MathUtils.degToRad(yaw);
       views.forEach(view => { view.viewportVisible = false; });
       setProgress(progress);
