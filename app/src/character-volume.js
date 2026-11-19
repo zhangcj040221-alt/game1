@@ -45,13 +45,19 @@ function volume(){
 }
 // A soft union of a rounded torso and two leg volumes gives a continuous chest, belly and back.
 // The frontal width and height are normalized to R05; the depth is independently designed.
-function bodyVolume(){
- // Seated pelvis and forward thighs form one continuous clay surface.
- const n=104,extent=.8,effect=new MarchingCubes(n,materials.bubu,false,false,60000);effect.isolation=0;
- const ell=(x,y,z,rx,ry,rz)=>(Math.sqrt((x/rx)**2+(y/ry)**2+(z/rz)**2)-1)*Math.min(rx,ry,rz);
- const blend=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
+const ell=(x,y,z,rx,ry,rz)=>(Math.sqrt((x/rx)**2+(y/ry)**2+(z/rz)**2)-1)*Math.min(rx,ry,rz);
+const blend=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
+function sculptBody(field){
+ const n=104,extent=.8,effect=new MarchingCubes(n,materials.bubu,false,false,60000);
+ effect.isolation=0;
  for(let z=0;z<n;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++){
   const px=(x/n*2-1)*extent,py=(y/n*2-1)*extent,pz=(z/n*2-1)*extent;
+  effect.field[z*n*n+y*n+x]=-Math.max(field(px,py,pz),.008-py);
+ }
+ effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();return g;
+}
+function bodyVolume(){
+ return sculptBody((px,py,pz)=>{
   // The upper chest keeps its round section. Below the waist the seated
   // pelvis carries its width closer to the floor, especially at the back.
   const height=(py-.31)/(py<.31?.331:.305);
@@ -71,9 +77,23 @@ function bodyVolume(){
    const across=Math.cos(a)*dx-Math.sin(a)*dz,along=Math.sin(a)*dx+Math.cos(a)*dz;
    d=blend(d,ell(across,py-l.centreY,along,l.radiusX,l.radiusY,l.radiusZ),l.blend);
   }
-  effect.field[z*n*n+y*n+x]=-Math.max(d,.008-py);
- }
- effect.update();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(effect.geometry.attributes.position.array.slice(0,effect.count*3),3));g.setAttribute('normal',new THREE.Float32BufferAttribute(effect.geometry.attributes.normal.array.slice(0,effect.count*3),3));g.scale(extent,extent,extent);effect.geometry.dispose();return g;
+  return d;
+ });
+}
+
+// The abdomen ends above the floor. Only the two feet carry weight.
+function standingVolume(){
+ return sculptBody((x,y,z)=>{
+  const height=(y-.39)/(y<.39?.296:.354);
+  const width=.432-.055*THREE.MathUtils.clamp(height,-1,1);
+  const depth=.308-.027*THREE.MathUtils.clamp(height,-1,1);
+  const vertical=height<0?Math.abs(height)**3:height**2;
+  const front=.014*Math.exp(-(((y-.29)/.145)**2));
+  const torso=.296*(Math.sqrt((x/width)**2+((z+.016-front)/depth)**2+vertical)-1);
+  // A single mirrored foot field keeps the stance symmetric about the centre.
+  const leg=ell(Math.abs(x)-.272,y-.125,z-.025,.136,.166,.158);
+  return blend(torso,leg,.072);
+ });
 }
 const ray=new THREE.Raycaster();
 function faceZ(head,x,y){head.updateMatrixWorld(true);ray.set(new THREE.Vector3(x,y,2),new THREE.Vector3(0,0,-1));const hit=ray.intersectObject(head,false)[0];return hit?hit.point.z:.31;}
@@ -158,8 +178,13 @@ function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attr
 }
 // Sweep elliptical sections perpendicular to the bent arm so the rounded
 // palm keeps its thickness in both front and profile views.
-function holdingArm(sign){
- const path=new THREE.CubicBezierCurve3(
+function armVolume(sign,standing){
+ const path=standing?new THREE.CubicBezierCurve3(
+  new THREE.Vector3(-sign*.047,.012,0),
+  new THREE.Vector3(sign*.038,-.044,.064),
+  new THREE.Vector3(sign*.113,-.184,.101),
+  new THREE.Vector3(sign*.081,-.298,.137)
+ ):new THREE.CubicBezierCurve3(
   new THREE.Vector3(-sign*.106,-.007,0),
   new THREE.Vector3(-sign*.036,-.074,.095),
   new THREE.Vector3(sign*.028,-.135,.246),
@@ -192,7 +217,10 @@ function holdingArm(sign){
  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
  geo.setIndex(indices);geo.computeVertexNormals();return geo;
 }
-function character(yi,{openMouth=false,wink=false}={}){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;
+function character(yi,{openMouth=false,wink=false,pose='seated'}={}){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);
+ const standing=pose==='standing';
+ headRig.position.y=standing?1.119:1.02;
+ headRig.name='head-pivot';
  const skin=yi?materials.yier:materials.bubu,head=new THREE.Mesh(geometries.head,skin);head.castShadow=true;head.receiveShadow=true;
  // Build face in head-local space before mounting the head rig.
  const ep=headProfile.ear;
@@ -242,18 +270,37 @@ function character(yi,{openMouth=false,wink=false}={}){const root=new THREE.Grou
   inkStroke(head,path,.01);
  }
  mouth(head,openMouth);headRig.add(head);
- mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
- if(yi)for(const sign of [-1,1]){
-  const f=bodyProfile.footTip,foot=ball(root,materials.earDark,sign*f.x,f.y,f.z,f.rx,f.ry,f.rz);foot.name='dark-foot-tip';foot.rotation.y=sign*THREE.MathUtils.degToRad(bodyProfile.leg.splayDegrees);
+ if(standing){
+  const body=geometries.standingBody??=standingVolume();
+  if(yi){
+   mesh(root,geometries.standingWhite??=sliceBody(body,.081,false),skin).name='standing-body';
+   mesh(root,geometries.standingShoes??=sliceBody(body,.081,true),materials.earDark).name='standing-shoes';
+   const band=mesh(root,new THREE.TorusGeometry(.326,.022,12,64),materials.dark,0,.619,-.012);
+   band.rotation.x=Math.PI/2;band.scale.y=.76;band.name='neckband';
+   for(const sign of [-1,1]){
+    const end=ball(root,materials.dark,sign*.045,.58,.254,.042,.077,.032);
+    end.rotation.z=sign*.58;end.name='bow-loop';
+   }
+   ball(root,materials.dark,0,.613,.254,.036,.034,.033).name='bow-knot';
+  }else mesh(root,body,skin).name='standing-body';
+  ball(root,skin,0,.235,-.301,.084,.081,.083).name='tail';
+ }else{
+  mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
+  if(yi)for(const sign of [-1,1]){
+   const f=bodyProfile.footTip,foot=ball(root,materials.earDark,sign*f.x,f.y,f.z,f.rx,f.ry,f.rz);
+   foot.name='dark-foot-tip';foot.rotation.y=sign*THREE.MathUtils.degToRad(bodyProfile.leg.splayDegrees);
+  }
+  ball(root,skin,0,.110,-.398,.088,.083,.084).name='tail';
  }
- ball(root,skin,0,.110,-.398,.088,.083,.084).name='tail';
  const arms=[];for(const sign of [-1,1]){
-  const pivot=new THREE.Group();pivot.position.set(sign*.27,.48,.015);root.add(pivot);
-  const key=sign<0?'leftHoldingArm':'rightHoldingArm';
-  const arm=mesh(pivot,geometries[key]??=holdingArm(sign),skin);
-  arm.name='forward-holding-paw';arms.push(pivot);
+  const pivot=new THREE.Group();
+  if(standing)pivot.position.set(sign*.307,.607,.012);
+  else pivot.position.set(sign*.27,.48,.015);
+  pivot.name=sign<0?'shoulder-left':'shoulder-right';root.add(pivot);
+  const key=pose+'-arm-'+sign;
+  const arm=mesh(pivot,geometries[key]??=armVolume(sign,standing),skin);
+  arm.name=standing?'standing-paw':'forward-holding-paw';arms.push(pivot);
  }
- // Seated reference has no added bow tie. Head/body contact hides the shoulder tops.
  return {root,headRig,eyes,arms,setBlink(value){for(const e of eyes)e.userData.blink.value=value;}};
 }
 
