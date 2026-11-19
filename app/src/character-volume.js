@@ -87,12 +87,13 @@ function standingVolume(){
   const height=(y-.39)/(y<.39?.296:.354);
   const width=.432-.055*THREE.MathUtils.clamp(height,-1,1);
   const depth=.308-.027*THREE.MathUtils.clamp(height,-1,1);
-  const vertical=height<0?Math.abs(height)**3:height**2;
+  const vertical=height<0?Math.abs(height)**2.35:height**2;
   const front=.014*Math.exp(-(((y-.29)/.145)**2));
   const torso=.296*(Math.sqrt((x/width)**2+((z+.016-front)/depth)**2+vertical)-1);
-  // A single mirrored foot field keeps the stance symmetric about the centre.
-  const leg=ell(Math.abs(x)-.272,y-.125,z-.025,.136,.166,.158);
-  return blend(torso,leg,.072);
+  // Move the sole a little ahead of the ankle as it takes weight.
+  const toe=1-THREE.MathUtils.smoothstep(y,.035,.19);
+  const leg=ell(Math.abs(x)-(.255+.013*toe),y-.131,z-(.019+.037*toe),.126,.154,.154);
+  return blend(torso,leg,.095);
  });
 }
 const ray=new THREE.Raycaster();
@@ -180,10 +181,10 @@ function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attr
 // palm keeps its thickness in both front and profile views.
 function armVolume(sign,standing){
  const path=standing?new THREE.CubicBezierCurve3(
-  new THREE.Vector3(-sign*.047,.012,0),
-  new THREE.Vector3(sign*.038,-.044,.064),
-  new THREE.Vector3(sign*.113,-.184,.101),
-  new THREE.Vector3(sign*.081,-.298,.137)
+  new THREE.Vector3(-sign*.072,.017,-.026),
+  new THREE.Vector3(sign*.025,-.053,-.012),
+  new THREE.Vector3(sign*.166,-.203,.065),
+  new THREE.Vector3(sign*.086,-.275,.150)
  ):new THREE.CubicBezierCurve3(
   new THREE.Vector3(-sign*.106,-.007,0),
   new THREE.Vector3(-sign*.036,-.074,.095),
@@ -195,11 +196,21 @@ function armVolume(sign,standing){
  for(let j=1;j<rows;j++){
   const angle=Math.PI*j/rows,t=(1-Math.cos(angle))/2,radius=Math.sin(angle);
   path.getPoint(t,centre);path.getTangent(t,tangent);
-  across.set(tangent.z,0,-tangent.x).normalize();up.crossVectors(tangent,across);
   const palm=THREE.MathUtils.smoothstep(t,.45,.88);
+  if(standing){
+   // Horizontal sections let the upper arm disappear into the flank while
+   // the pad rolls forward. The flat inner face rests against the abdomen.
+   across.set(1,0,0);up.set(0,0,1);
+  }else{
+   across.set(tangent.z,0,-tangent.x).normalize();up.crossVectors(tangent,across);
+  }
+  const width=standing?.084+.020*palm:.107+.009*palm;
+  const depth=standing?.092+.038*palm:.110-.012*palm;
   for(let i=0;i<sides;i++){
    const a=2*Math.PI*i/sides;
-   const x=Math.cos(a)*radius*(.107+.009*palm),y=Math.sin(a)*radius*(.110-.012*palm);
+   const side=Math.cos(a);
+   const innerFlatten=standing&&sign*side<0?1-.18*palm:1;
+   const x=side*radius*width*innerFlatten,y=Math.sin(a)*radius*depth;
    positions.push(centre.x+x*across.x+y*up.x,centre.y+y*up.y,centre.z+x*across.z+y*up.z);
   }
  }

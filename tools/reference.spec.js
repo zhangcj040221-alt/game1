@@ -12,7 +12,7 @@ test('orthographic character reference sheets',async({page})=>{test.setTimeout(9
   const download=page.waitForEvent('download');
   await page.locator('#export-'+name).click();
   const asset=await download;
-  expect(asset.suggestedFilename()).toBe(name+'-standing-R22.glb');
+  expect(asset.suggestedFilename()).toBe(name+'-standing-R23.glb');
   await asset.saveAs('test-results/'+asset.suggestedFilename());
  }
  await page.locator('#clay-study').screenshot({path:'test-results/clay-study-R20.png'});
