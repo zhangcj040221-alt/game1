@@ -152,10 +152,11 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
    // Seat the shoulder inside the ribcage. Ease back onto the original
    // palm path as the arm clears the front of the belly.
    const shoulderInset=.106*(1-THREE.MathUtils.smoothstep(t,.46,.94));
-   const cx=sign*(2*(1-t)*t*.12-t*t*.035-shoulderInset);
+   const palm=THREE.MathUtils.smoothstep(t,.48,1);
+   const cx=sign*(2*(1-t)*t*.12-t*t*.035-shoulderInset-.105*palm);
    const cy=2*(1-t)*t*(-.105)+t*t*(-.105);
    const cz=2*(1-t)*t*.12+t*t*.37;
-   p.setXYZ(i,cx+x*(.112-.012*t),cy+y*(.105-.012*t),cz);
+   p.setXYZ(i,cx+x*(.112-.012*t),cy+y*(.105-.012*t-.018*palm),cz);
   }
   g.computeVertexNormals();const arm=mesh(pivot,g,skin);
   arm.name='forward-holding-paw';arms.push(pivot);
