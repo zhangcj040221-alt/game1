@@ -1,0 +1,147 @@
+{
+  "version": "R20-cross-view-head",
+  "status": "pending",
+  "basis": "Cross-view study from supplied figurine photos; camera estimates and sculpted sections, not official dimensions.",
+  "sections": [
+    [
+      -0.50522,
+      0,
+      -0.035,
+      -0.035,
+      0.82
+    ],
+    [
+      -0.48417,
+      0.32,
+      0.16,
+      -0.235,
+      0.8
+    ],
+    [
+      -0.446,
+      0.51,
+      0.336,
+      -0.406,
+      0.79
+    ],
+    [
+      -0.378,
+      0.609,
+      0.466,
+      -0.52,
+      0.8
+    ],
+    [
+      -0.287,
+      0.651,
+      0.52,
+      -0.59,
+      0.82
+    ],
+    [
+      -0.209,
+      0.653,
+      0.516,
+      -0.623,
+      0.83
+    ],
+    [
+      -0.111,
+      0.642,
+      0.484,
+      -0.644,
+      0.85
+    ],
+    [
+      0.017,
+      0.638,
+      0.473,
+      -0.657,
+      0.88
+    ],
+    [
+      0.15,
+      0.614,
+      0.453,
+      -0.647,
+      0.92
+    ],
+    [
+      0.3,
+      0.538,
+      0.391,
+      -0.599,
+      0.96
+    ],
+    [
+      0.426,
+      0.418,
+      0.296,
+      -0.49,
+      1.0
+    ],
+    [
+      0.533,
+      0.223,
+      0.134,
+      -0.312,
+      1.0
+    ],
+    [
+      0.578,
+      0,
+      -0.06912,
+      -0.06912,
+      1.0
+    ]
+  ],
+  "eye": {
+    "x": 0.259,
+    "y": -0.108,
+    "rx": 0.056,
+    "ry": 0.057
+  },
+  "mouthYOffset": 0.068,
+  "blush": {
+    "x": 0.444,
+    "y": -0.287,
+    "radius": 0.112,
+    "projection": "local tangent disk projected onto cheek along its surface normal"
+  },
+  "ear": {
+    "x": 0.459,
+    "y": 0.443,
+    "z": -0.086,
+    "radius": [
+      0.138,
+      0.139,
+      0.088
+    ],
+    "outwardTilt": 0.57,
+    "yaw": 0.16,
+    "surface": "Broad dark inner bowl partly hidden by crown; the visible half-moon comes from head occlusion, not an eyebrow-shaped paint stripe.",
+    "solidRadius": [
+      0.119,
+      0.124,
+      0.088
+    ],
+    "cup": {
+      "width": 0.096,
+      "height": 0.109,
+      "y": 0.008,
+      "depth": 0.027,
+      "paintY": 0.001
+    }
+  },
+  "cameraFit": {
+    "kind": "bounded joint weak-perspective fit",
+    "shapeFactors": {
+      "height": 1.0525405638818193,
+      "depth": 1.0634078201597028
+    },
+    "limitations": "Inherited R04 camera estimates, not re-fitted or calibrated for R06. No precise pure-side/rear reference. Former landmark errors do not validate this revision."
+  },
+  "capProfile": "elliptical closure at crown and chin",
+  "revision": "Lower cheeks turn forward below the mouth. The occiput stays full behind the ears. Expression paint follows the same head surface.",
+  "sidePlaneZ": -0.065
+}

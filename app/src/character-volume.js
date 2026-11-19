@@ -1,5 +1,5 @@
 import bodyProfile from './body-profile-r13.json';
-import headProfile from './head-profile-r07.json';
+import headProfile from './head-profile-r20.json';
 import * as THREE from 'three';
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
@@ -7,6 +7,7 @@ const geometries={},unit=.0085;
 const clay=(color,extra={})=>new THREE.MeshStandardMaterial({color,roughness:.43,metalness:0,...extra});
 const materials={yier:clay('#f5eee3'),bubu:new THREE.MeshPhysicalMaterial({color:'#ce7c4e',roughness:.58,metalness:0,specularIntensity:.38}),dark:clay('#42251e',{roughness:.38}),pink:new THREE.MeshPhysicalMaterial({color:'#e99581',roughness:.83,metalness:0,specularIntensity:.12}),yellow:new THREE.MeshPhysicalMaterial({color:'#e9a32e',roughness:.83,metalness:0,specularIntensity:.12}),gold:clay('#cba86b',{metalness:.72,roughness:.29}),floor:clay('#292e4c',{roughness:.64}),back:clay('#20213e',{roughness:.65})};
 // Painted facial ink stays dark under grazing light; ears and feet keep their clay finish.
+materials.tongue=clay('#ec819a',{roughness:.8});
 materials.ink=new THREE.MeshPhysicalMaterial({color:'#301e1c',roughness:.82,metalness:0,specularIntensity:.12});
 materials.earDark=new THREE.MeshPhysicalMaterial({color:'#2c2727',roughness:.60,metalness:0,specularIntensity:.30});
 const sphere=new THREE.SphereGeometry(1,32,24);
@@ -94,14 +95,62 @@ function cheekPatch(head,mat,cx,cy,radius){
  const patch=mesh(head,g,mat);patch.name='cheek-pigment';patch.castShadow=false;patch.receiveShadow=false;patch.userData.surfacePatch=true;return patch;
 }
 function eye(head,x,y){const mat=materials.ink.clone(),blink={value:1};mat.onBeforeCompile=shader=>{shader.uniforms.paintBlink=blink;shader.vertexShader='varying vec2 vPaintUv;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvPaintUv=uv;');shader.fragmentShader='varying vec2 vPaintUv; uniform float paintBlink;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nvec2 paintP=(vPaintUv-.5)*2.; paintP.y/=max(.025,paintBlink); if(dot(paintP,paintP)>1.)discard;');};mat.customProgramCacheKey=()=> 'paint-eye-R03';const m=facePatch(head,mat,x,y,headProfile.eye.rx,headProfile.eye.ry);m.userData.blink=blink;return m;}
-function mouth(head){const curve=new THREE.CurvePath(),points=[[-.058,-.177],[-.058,-.211],[-.021,-.219],[0,-.193],[.021,-.219],[.058,-.211],[.058,-.177]],p=points.map(([x,y])=>new THREE.Vector3(x,y+headProfile.mouthYOffset,0));curve.add(new THREE.CubicBezierCurve3(p[0],p[1],p[2],p[3]));curve.add(new THREE.CubicBezierCurve3(p[3],p[4],p[5],p[6]));const pos=[],ix=[],steps=80;for(let i=0;i<=steps;i++){const t=i/steps,v=curve.getPoint(t),n=curve.getTangent(t),nx=-n.y*.009,ny=n.x*.009;for(const side of [-1,1]){const x=v.x+nx*side,y=v.y+ny*side;pos.push(x,y,faceZ(head,x,y)+.003);}if(i<steps){const a=i*2;ix.push(a,a+1,a+2,a+1,a+3,a+2);}}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();const m=mesh(head,g,materials.ink);m.material.side=THREE.DoubleSide;m.castShadow=false;m.receiveShadow=false;m.userData.surfacePatch=true;for(const v of [p[0],p[6]])facePatch(head,materials.ink,v.x,v.y,.009);}
+// Ink, including expression variants, sits directly on the same sculpt.
+function inkStroke(head,curve,width){
+ const positions=[],indices=[],steps=40;
+ for(let i=0;i<=steps;i++){
+  const t=i/steps,v=curve.getPoint(t),n=curve.getTangent(t);
+  for(const side of [-1,1]){
+   const x=v.x-side*n.y*width,y=v.y+side*n.x*width;
+   positions.push(x,y,faceZ(head,x,y)+.0035);
+  }
+  if(i<steps){const k=2*i;indices.push(k,k+2,k+1,k+1,k+2,k+3);}
+ }
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+ const ink=mesh(head,geo,materials.ink);ink.castShadow=false;ink.receiveShadow=false;ink.userData.surfacePatch=true;
+ for(const t of [0,1]){const v=curve.getPoint(t);facePatch(head,materials.ink,v.x,v.y,width);}
+}
+function mouth(head,open){
+ const lipY=headProfile.mouthYOffset-.177;
+ if(open){
+  const outline=new THREE.Path();
+  outline.moveTo(0,-.016);
+  outline.bezierCurveTo(.023,-.039,.031,-.036,.042,-.025);
+  outline.bezierCurveTo(.048,-.064,.071,-.149,0,-.151);
+  outline.bezierCurveTo(-.071,-.149,-.048,-.064,-.042,-.025);
+  outline.bezierCurveTo(-.031,-.036,-.023,-.039,0,-.016);
+  const rim=outline.getSpacedPoints(64).slice(0,-1),positions=[],indices=[],centreY=-.082;
+  const point=(x,y)=>positions.push(x,y+lipY,faceZ(head,x,y+lipY)+.0025);
+  point(0,centreY);
+  const geo=new THREE.BufferGeometry();
+  for(const [j,scale] of [.35,.68,.86,1].entries()){
+   for(const v of rim)point(v.x*scale,centreY+(v.y-centreY)*scale);
+   const start=indices.length;
+   for(let i=0;i<rim.length;i++){
+    const a=1+j*rim.length+i,b=1+j*rim.length+(i+1)%rim.length;
+    if(j===0)indices.push(0,b,a);
+    else indices.push(a-rim.length,b,a,b-rim.length,b,a-rim.length);
+   }
+   geo.addGroup(start,indices.length-start,j===3?1:0);
+  }
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+  const paint=mesh(head,geo,[materials.tongue,materials.ink]);paint.castShadow=false;paint.receiveShadow=false;paint.userData.surfacePatch=true;
+ }
+ const points=[[-.058,0],[-.058,-.034],[-.021,-.042],[0,-.016],[.021,-.042],[.058,-.034],[.058,0]]
+  .map(([x,y])=>new THREE.Vector2(x,y+lipY));
+ const curve=new THREE.CurvePath();
+ curve.add(new THREE.CubicBezierCurve(...points.slice(0,4)));
+ curve.add(new THREE.CubicBezierCurve(...points.slice(3)));
+ inkStroke(head,curve,.008);
+}
 // Rounded tapered paws: a broad root overlaps the torso, with a small soft fingertip.
 function pawGeometry(){const g=new THREE.SphereGeometry(1,40,32),p=g.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i),t=(y+1)/2,width=.085+.022*t;p.setXYZ(i,p.getX(i)*width,y*.139,p.getZ(i)*(.092+.010*t));}g.computeVertexNormals();return g;}
 function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attributes.position,n=source.attributes.normal;
  for(let i=0;i<p.count;i+=3){let polygon=[0,1,2].map(j=>({p:new THREE.Vector3().fromBufferAttribute(p,i+j),n:new THREE.Vector3().fromBufferAttribute(n,i+j)})),out=[];for(let j=0;j<polygon.length;j++){const a=polygon[j],b=polygon[(j+1)%polygon.length],aIn=below?a.p.y<=cut:a.p.y>=cut,bIn=below?b.p.y<=cut:b.p.y>=cut;if(aIn)out.push(a);if(aIn!==bIn){const t=(cut-a.p.y)/(b.p.y-a.p.y);out.push({p:a.p.clone().lerp(b.p,t),n:a.n.clone().lerp(b.n,t).normalize()});}}for(let j=1;j<out.length-1;j++)for(const v of [out[0],out[j],out[j+1]]){positions.push(...v.p.toArray());normals.push(...v.n.toArray());}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));return g;
 }
-function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;headRig.rotation.x=THREE.MathUtils.degToRad(4);
+function character(yi,{openMouth=false,wink=false}={}){const root=new THREE.Group(),headRig=new THREE.Group();root.add(headRig);headRig.position.y=1.02;
  const skin=yi?materials.yier:materials.bubu,head=new THREE.Mesh(geometries.head,skin);head.castShadow=true;head.receiveShadow=true;
  // Build face in head-local space before mounting the head rig.
  const ep=headProfile.ear;
@@ -142,7 +191,15 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
    e.rotation.z=-sign*ep.outwardTilt;e.rotation.y=sign*ep.yaw;
  }
  const eyes=[];for(const sign of [-1,1]){eyes.push(eye(head,sign*headProfile.eye.x,headProfile.eye.y));cheekPatch(head,yi?materials.pink:materials.yellow,sign*headProfile.blush.x,headProfile.blush.y,headProfile.blush.radius);}
- mouth(head);headRig.add(head);
+ if(wink){
+  eyes[1].visible=false;
+  const {x,y}=headProfile.eye;
+  const corner=new THREE.Vector2(x-.037,y),path=new THREE.CurvePath();
+  path.add(new THREE.LineCurve(new THREE.Vector2(x+.038,y+.028),corner));
+  path.add(new THREE.LineCurve(corner,new THREE.Vector2(x+.038,y-.026)));
+  inkStroke(head,path,.01);
+ }
+ mouth(head,openMouth);headRig.add(head);
  mesh(root,geometries.body,skin).name='seated-chest-hips-legs';
  if(yi)for(const sign of [-1,1]){
   const f=bodyProfile.footTip,foot=ball(root,materials.earDark,sign*f.x,f.y,f.z,f.rx,f.ry,f.rz);foot.name='dark-foot-tip';foot.rotation.y=sign*THREE.MathUtils.degToRad(bodyProfile.leg.splayDegrees);
