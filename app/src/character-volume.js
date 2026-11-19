@@ -149,7 +149,10 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
   for(let i=0;i<p.count;i++){
    const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(z+1)/2;
    // Quadratic shoulder -> elbow -> palm path, with rounded embedded caps.
-   const cx=sign*(2*(1-t)*t*.12-t*t*.035);
+   // Seat the shoulder inside the ribcage. Ease back onto the original
+   // palm path as the arm clears the front of the belly.
+   const shoulderInset=.106*(1-THREE.MathUtils.smoothstep(t,.46,.94));
+   const cx=sign*(2*(1-t)*t*.12-t*t*.035-shoulderInset);
    const cy=2*(1-t)*t*(-.105)+t*t*(-.105);
    const cz=2*(1-t)*t*.12+t*t*.37;
    p.setXYZ(i,cx+x*(.112-.012*t),cy+y*(.105-.012*t),cz);
