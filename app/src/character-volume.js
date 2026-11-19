@@ -182,9 +182,9 @@ function sliceBody(source,cut,below){const positions=[],normals=[],p=source.attr
 function armVolume(sign,standing){
  const path=standing?new THREE.CubicBezierCurve3(
   new THREE.Vector3(-sign*.072,.017,-.026),
-  new THREE.Vector3(sign*.025,-.053,-.012),
-  new THREE.Vector3(sign*.166,-.203,.065),
-  new THREE.Vector3(sign*.086,-.275,.150)
+  new THREE.Vector3(sign*.008,-.046,-.014),
+  new THREE.Vector3(sign*.136,-.192,.098),
+  new THREE.Vector3(sign*.096,-.284,.147)
  ):new THREE.CubicBezierCurve3(
   new THREE.Vector3(-sign*.106,-.007,0),
   new THREE.Vector3(-sign*.036,-.074,.095),
@@ -198,9 +198,9 @@ function armVolume(sign,standing){
   path.getPoint(t,centre);path.getTangent(t,tangent);
   const palm=THREE.MathUtils.smoothstep(t,.45,.88);
   if(standing){
-   // Horizontal sections let the upper arm disappear into the flank while
-   // the pad rolls forward. The flat inner face rests against the abdomen.
-   across.set(1,0,0);up.set(0,0,1);
+   // Keep the palm width measured across the flank as it rolls forward.
+   across.set(1,0,0).addScaledVector(tangent,-tangent.x).normalize();
+   up.crossVectors(tangent,across);
   }else{
    across.set(tangent.z,0,-tangent.x).normalize();up.crossVectors(tangent,across);
   }
@@ -211,7 +211,7 @@ function armVolume(sign,standing){
    const side=Math.cos(a);
    const innerFlatten=standing&&sign*side<0?1-.18*palm:1;
    const x=side*radius*width*innerFlatten,y=Math.sin(a)*radius*depth;
-   positions.push(centre.x+x*across.x+y*up.x,centre.y+y*up.y,centre.z+x*across.z+y*up.z);
+   positions.push(centre.x+x*across.x+y*up.x,centre.y+x*across.y+y*up.y,centre.z+x*across.z+y*up.z);
   }
  }
  const tip=positions.length/3,last=tip-sides;
