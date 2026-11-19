@@ -51,9 +51,14 @@ function bodyVolume(){
  const blend=(a,b,k)=>{const h=Math.max(0,Math.min(1,.5+.5*(b-a)/k));return b+(a-b)*h-k*h*(1-h);};
  for(let z=0;z<n;z++)for(let y=0;y<n;y++)for(let x=0;x<n;x++){
   const px=(x/n*2-1)*extent,py=(y/n*2-1)*extent,pz=(z/n*2-1)*extent;
-  // One continuous chest/belly field, rather than overlapping torso/hip lobes.
-  const height=Math.max(-1,Math.min(1,(py-.31)/.305));
-  let d=ell(px,py-.31,pz+.045,.405-.045*height,.305,.325);
+  // The upper chest keeps its round section. Below the waist the seated
+  // pelvis carries its width closer to the floor, especially at the back.
+  const height=(py-.31)/(py<.31?.331:.305);
+  const hip=1-THREE.MathUtils.smoothstep(py,.10,.40);
+  const width=.405-.045*THREE.MathUtils.clamp(height,-1,1)+.043*hip;
+  const depth=.325+.035*hip;
+  const vertical=height<0?height**4:height**2;
+  let d=.305*(Math.sqrt((px/width)**2+((pz+.045+.02*hip)/depth)**2+vertical)-1);
   for(const sign of [-1,1]){
    const l=bodyProfile.leg,a=sign*THREE.MathUtils.degToRad(l.splayDegrees),dx=px-sign*l.centreX,dz=pz-l.centreZ;
    const across=Math.cos(a)*dx-Math.sin(a)*dz,along=Math.sin(a)*dx+Math.cos(a)*dz;
@@ -142,7 +147,7 @@ function character(yi){const root=new THREE.Group(),headRig=new THREE.Group();ro
  if(yi)for(const sign of [-1,1]){
   const f=bodyProfile.footTip,foot=ball(root,materials.earDark,sign*f.x,f.y,f.z,f.rx,f.ry,f.rz);foot.name='dark-foot-tip';foot.rotation.y=sign*THREE.MathUtils.degToRad(bodyProfile.leg.splayDegrees);
  }
- ball(root,skin,0,.135,-.388,.105,.103,.095).name='tail';
+ ball(root,skin,0,.110,-.398,.088,.083,.084).name='tail';
  const arms=[];for(const sign of [-1,1]){
   const pivot=new THREE.Group();pivot.position.set(sign*.27,.48,.015);root.add(pivot);
   const g=new THREE.SphereGeometry(1,48,32),p=g.attributes.position;
