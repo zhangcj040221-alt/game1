@@ -1,6 +1,16 @@
 import {test,expect} from '@playwright/test';
 import {writeFile} from 'node:fs/promises';
-test('orthographic character reference sheets',async({page})=>{test.setTimeout(90000);const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.setViewportSize({width:1800,height:1200});await page.goto('/reference.html');await page.waitForFunction(()=>window.__reference?.getState().ready,{},{timeout:60000});const state=await page.evaluate(()=>window.__reference.getState());expect(state.viewCount).toBe(24);expect(state.colourStudy.map(v=>v.id)).toEqual(['legacy','light-only','revised','albedo']);for(const [i,value] of [206,124,78].entries())expect(Math.abs(state.colourStudy[3].foreheadMedianRGB[i]-value)).toBeLessThanOrEqual(1);expect(state.cardYawDegrees).toEqual({min:-20,max:20});expect(state.dimensions.yier['头部宽度']).toBe(state.dimensions.bubu['头部宽度']);expect(state.dimensions.yier['头部厚度']).toBe(state.dimensions.bubu['头部厚度']);
+test('orthographic character reference sheets',async({page})=>{
+ test.setTimeout(150000);
+ const errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.setViewportSize({width:1800,height:1200});
+ await page.goto('/reference.html');
+ // Software WebGL on CI renders all study sheets before publishing the result.
+ await page.waitForFunction(()=>Boolean(window.__reference),undefined,{timeout:110000});
+ const state=await page.evaluate(()=>window.__reference.getState());
+ expect(state.ready,state.error).toBe(true);
+ expect(state.viewCount).toBe(24);expect(state.colourStudy.map(v=>v.id)).toEqual(['legacy','light-only','revised','albedo']);for(const [i,value] of [206,124,78].entries())expect(Math.abs(state.colourStudy[3].foreheadMedianRGB[i]-value)).toBeLessThanOrEqual(1);expect(state.cardYawDegrees).toEqual({min:-20,max:20});expect(state.dimensions.yier['头部宽度']).toBe(state.dimensions.bubu['头部宽度']);expect(state.dimensions.yier['头部厚度']).toBe(state.dimensions.bubu['头部厚度']);
  for(const name of ['yier','bubu']){await page.locator('#sheet-'+name).screenshot({path:`test-results/reference-${name}-R20.png`});for(const index of [1,2,3,4,5,6])await page.locator(`#views-${name} .view:nth-child(${index}) .view-image`).screenshot({path:`test-results/reference-${name}-${index}.png`});}
  for(const name of ['bubu','yier']){
   const images=page.locator('#standing-views-'+name+' img');
