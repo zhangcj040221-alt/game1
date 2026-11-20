@@ -28,12 +28,16 @@ export function bindStandingBody(actor,chains){
   const y=p.getY(i),x=p.getX(i),leg=legs[x<0?0:1];
   // Fade leg influence across the groin and into the abdomen on each side.
   const side=smooth(Math.abs(x),.025,.195);
-  const foot=1-smooth(y,.068,.125),thigh=smooth(y,.16,.29);
-  const pelvisShare=1-side*(1-smooth(y,.24,.445));
   if(y<.445){
+   // Short, thick legs need a broad compression zone. The sole and pelvis
+   // carry most of the mass while the knee guides the front silhouette.
+   const rise=smooth(y,.025,.425);
+   const bend=4*rise*(1-rise)*side;
+   const thigh=bend*.18*smooth(y,.10,.34);
+   const shin=bend*.18*(1-smooth(y,.10,.34));
+   const sole=side*(1-rise)*(1-thigh-shin);
    index.push(...[leg[2],leg[1],leg[0],pelvis].map(b=>bones.indexOf(b)));
-   const carried=1-pelvisShare;
-   weights.push(foot*carried,(1-foot-thigh)*carried,thigh*carried,pelvisShare);
+   weights.push(sole,shin,thigh,1-sole-shin-thigh);
   }else{
    const upper=smooth(y,.445,.54),top=smooth(y,.54,.635);
    index.push(...[pelvis,spine,chest,pelvis].map(b=>bones.indexOf(b)));
