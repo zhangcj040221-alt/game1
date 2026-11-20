@@ -26,7 +26,7 @@ const actors=[false,true].map(yi=>{
  return {root,head:root.getObjectByName('Head'),shoulders:['L_Shoulder','R_Shoulder'].map(n=>root.getObjectByName(n))};
 });
 const brass=matte('#bd8750'),rim=matte('#64574d');
-const lx=.085,lz=.29;
+const lx=.115,lz=.012;
 mesh(scene,new T.CylinderGeometry(.13,.17,.28,20),wood,lx,.14,lz);
 mesh(scene,new T.CylinderGeometry(.122,.14,.045,20),brass,lx,.31,lz);
 const glass=matte('#d4b57a');const bulb=ball(scene,glass,lx,.49,lz,.104,.16,.104);
