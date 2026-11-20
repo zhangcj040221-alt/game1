@@ -53,11 +53,12 @@ export function bindStandingBody(actor,chains){
  return old.bones[0];
 }
 
-export function squatClip(){
+// Both motions use the same planted two-link leg solution.
+function plantedClip(name,duration,kneeBend,rotations){
  const tracks=[],times=[],heights=[],angles=[];
  // Bake the closed-chain solution densely enough for linear GLB keyframes.
- for(let i=0;i<=48;i++){
-  const t=i/48,a=.67*Math.sin(Math.PI*t)**2;times.push(2.4*t);angles.push(a);heights.push(0,hipY-2*segment*(1-Math.cos(a)),0);
+ for(let i=0;i<=96;i++){
+  const t=i/96,a=kneeBend(t);times.push(duration*t);angles.push(a);heights.push(0,hipY-2*segment*(1-Math.cos(a)),0);
  }
  tracks.push(new T.VectorKeyframeTrack('Pelvis.position',times,heights));
  function rotate(name,factor){
@@ -66,6 +67,21 @@ export function squatClip(){
   tracks.push(new T.QuaternionKeyframeTrack(name+'.quaternion',times,values));
  }
  for(const side of ['L_','R_']){rotate(side+'Hip',-1);rotate(side+'Knee',2);rotate(side+'Ankle',-1);}
- rotate('Spine',.09);rotate('Chest',.065);rotate('Head',-.135);rotate('Tail',-.18);
- return new T.AnimationClip('ShallowSquat',2.4,tracks);
+ for(const [bone,factor] of Object.entries(rotations))rotate(bone,factor);
+ return new T.AnimationClip(name,duration,tracks);
+}
+
+export function squatClip(){
+ return plantedClip('ShallowSquat',2.4,t=>.67*Math.sin(Math.PI*t)**2,
+  {Spine:.09,Chest:.065,Head:-.135,Tail:-.18});
+}
+
+export function anticipationClip(){
+ // Gather slowly, settle briefly, then release into the standing pose.
+ const ease=T.MathUtils.smoothstep;
+ const load=t=>.39*(ease(t,0,.52)-ease(t,.64,1));
+ return plantedClip('Anticipation',1.25,load,{
+  Spine:.29,Chest:.12,Head:-.22,Tail:-.20,
+  L_Shoulder:.64,R_Shoulder:.64,L_Elbow:-.15,R_Elbow:-.15
+ });
 }

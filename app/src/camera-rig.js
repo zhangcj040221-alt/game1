@@ -4,7 +4,7 @@ import {character,geometries,bodyVolume,volume,clay,mesh} from './character-volu
 
 import {bindStandingArms} from './standing-arm-rig.js';
 
-import {bindStandingBody,squatClip} from './standing-body-rig.js';
+import {bindStandingBody,squatClip,anticipationClip} from './standing-body-rig.js';
 
 export function cameraStudy(){
  geometries.head??=volume();geometries.body??=bodyVolume();
@@ -45,5 +45,5 @@ export function cameraStudy(){
  prop.position.fromArray(away);prop.scale.setScalar(0);
  tracks.push(new T.VectorKeyframeTrack('Camera.position',times,[...away,...away,...hold,...hold]));
  tracks.push(new T.VectorKeyframeTrack('Camera.scale',[0,.35,.85,2.35],[0,0,0,0,0,0,1,1,1,1,1,1]));
- return {root,clip:new T.AnimationClip('HoldCamera',2.35,tracks),squat:squatClip()};
+ return {root,clip:new T.AnimationClip('HoldCamera',2.35,tracks),squat:squatClip(),anticipation:anticipationClip()};
 }

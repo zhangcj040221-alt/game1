@@ -2,10 +2,10 @@ import * as T from 'three';
 import {cameraStudy} from './camera-rig.js';
 import {addSculptLights} from './sculpt-studio.js';
 
-const {root,clip,squat}=cameraStudy(),scene=new T.Scene(),camera=new T.OrthographicCamera(-1,1,1,-1,.1,12);
+const {root,clip,squat,anticipation}=cameraStudy(),scene=new T.Scene(),camera=new T.OrthographicCamera(-1,1,1,-1,.1,12);
 scene.background=new T.Color('#eeeae2');scene.add(root);addSculptLights(scene);
 const mixer=new T.AnimationMixer(root);
-let active=squat,action=mixer.clipAction(active);
+let active=anticipation,action=mixer.clipAction(active);
 action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;
 const stage=document.querySelector('#stage'),pose=document.querySelector('#pose'),yaw=document.querySelector('#yaw');
 const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.toneMapping=T.ACESFilmicToneMapping;
@@ -25,13 +25,13 @@ bonesButton.onclick=()=>{
  bonesButton.textContent=helper.visible?'隐藏骨架':'显示骨架';render();
 };
 document.querySelector('#motion').onchange=e=>{
- mixer.stopAllAction();active=e.target.value==='camera'?clip:squat;
+ mixer.stopAllAction();active=({camera:clip,squat,anticipation})[e.target.value];
  action=mixer.clipAction(active);action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;
  pose.value=active===clip?100:50;render();
 };
 pose.oninput=yaw.oninput=render;new ResizeObserver(render).observe(stage);render();
 document.querySelector('#save').onclick=async()=>{
  const {GLTFExporter}=await import('three/addons/exporters/GLTFExporter.js');
- const asset=cameraStudy();const bytes=await new GLTFExporter().parseAsync(asset.root,{binary:true,animations:[asset.clip,asset.squat]});
+ const asset=cameraStudy();const bytes=await new GLTFExporter().parseAsync(asset.root,{binary:true,animations:[asset.clip,asset.squat,asset.anticipation]});
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'model/gltf-binary'}));a.download='bubu-standing-rig.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 };
