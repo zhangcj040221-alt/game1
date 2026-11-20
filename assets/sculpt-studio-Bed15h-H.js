@@ -1,0 +1,1 @@
+import{T as e,y as t}from"./three.module-7MZhIeO7.js";function n(n,r=!1){n.add(new e(`#ffffff`,r?`#b6a99b`:`#b8b8b8`,r?2.2:1.35));let i=new t(r?`#fff5e9`:`#ffffff`,r?2.3:2.6);i.position.set(-3,5,5),n.add(i);let a=new t(r?`#f2f5ff`:`#ffffff`,r?1.1:.65);a.position.set(3,2,3),n.add(a);let o=new t(`#ffffff`,r?1:.5);return o.position.set(-2,3,-4),n.add(o),i}export{n as t};

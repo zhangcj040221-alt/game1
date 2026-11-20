@@ -1,0 +1,23 @@
+import * as T from 'three';
+import {cameraStudy} from './camera-rig.js';
+import {addSculptLights} from './sculpt-studio.js';
+
+const {root,clip}=cameraStudy(),scene=new T.Scene(),camera=new T.OrthographicCamera(-1,1,1,-1,.1,12);
+scene.background=new T.Color('#eeeae2');scene.add(root);addSculptLights(scene);
+const mixer=new T.AnimationMixer(root),action=mixer.clipAction(clip);
+action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;
+const stage=document.querySelector('#stage'),pose=document.querySelector('#pose'),yaw=document.querySelector('#yaw');
+const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.toneMapping=T.ACESFilmicToneMapping;
+stage.append(renderer.domElement);
+function render(){
+ action.reset().play();mixer.setTime(clip.duration*Number(pose.value)/100);
+ const a=T.MathUtils.degToRad(+yaw.value);camera.position.set(5*Math.sin(a),1.06,5*Math.cos(a));camera.lookAt(0,.87,0);
+ const w=stage.clientWidth,h=stage.clientHeight;camera.top=1.03;camera.bottom=-1.03;camera.left=-1.03*w/h;camera.right=-camera.left;camera.updateProjectionMatrix();
+ renderer.setSize(w,h,false);renderer.render(scene,camera);document.querySelector('#deg').value=yaw.value+'°';
+}
+pose.oninput=yaw.oninput=render;new ResizeObserver(render).observe(stage);render();
+document.querySelector('#save').onclick=async()=>{
+ const {GLTFExporter}=await import('three/addons/exporters/GLTFExporter.js');
+ const asset=cameraStudy();const bytes=await new GLTFExporter().parseAsync(asset.root,{binary:true,animations:[asset.clip]});
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes],{type:'model/gltf-binary'}));a.download='bubu-camera-rig.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
