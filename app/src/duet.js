@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {stepClip} from './step-clip.js';
 import {cameraStudy} from './camera-rig.js';
 import {addSculptLights} from './sculpt-studio.js';
 
@@ -8,15 +9,16 @@ const scene=new T.Scene(),camera=new T.OrthographicCamera(-2,2,2,-2,.1,20);
 const renderer=new T.WebGLRenderer({alpha:true,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.toneMapping=T.ACESFilmicToneMapping;
 stage.append(renderer.domElement);addSculptLights(scene);
-const cycle=3.6;
+const stepping=stage.dataset.motion==='step';
+const cycle=stepping?4.4:3.6;
 const actors=[false,true].map((yi,i)=>{
  const {root,anticipation}=cameraStudy(yi);
  const placement=new T.Group();
- placement.position.x=yi?.79:-.79;placement.rotation.y=yi?-.44:.44;
+ placement.position.x=yi?.79:-.79;placement.rotation.y=(yi?-1:1)*(stepping?.24:.44);
  placement.add(root);scene.add(placement);
- const mixer=new T.AnimationMixer(root),action=mixer.clipAction(anticipation);
+ const mixer=new T.AnimationMixer(root),action=mixer.clipAction(stepping?stepClip(yi):anticipation);
  action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;
- return {mixer,action,delay:.18+1.22*i};
+ return {mixer,action,delay:stepping?.12+1.65*i:.18+1.22*i};
 });
 const dais=new T.Mesh(new T.CylinderGeometry(1.78,1.73,.11,96),new T.MeshStandardMaterial({color:'#accabb',roughness:.96}));
 dais.scale.z=.57;dais.position.y=-.055;scene.add(dais);

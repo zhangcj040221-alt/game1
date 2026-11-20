@@ -7,3 +7,4 @@ await cp('dist/reference.html','reference.html');
 await cp('dist/breeze.html','breeze.html');
 await cp('dist/camera-rig.html','camera-rig.html');
 await cp('dist/duet.html','duet.html');
+await cp('dist/step.html','step.html');
