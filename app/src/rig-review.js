@@ -15,6 +15,14 @@ function render(){
  const w=stage.clientWidth,h=stage.clientHeight;camera.top=1.03;camera.bottom=-1.03;camera.left=-1.03*w/h;camera.right=-camera.left;camera.updateProjectionMatrix();
  renderer.setSize(w,h,false);renderer.render(scene,camera);document.querySelector('#deg').value=yaw.value+'°';
 }
+const helper=new T.SkeletonHelper(root);
+helper.material.depthTest=false;helper.material.depthWrite=false;helper.renderOrder=2;helper.visible=false;
+scene.add(helper);
+const bonesButton=document.querySelector('#bones');
+bonesButton.onclick=()=>{
+ helper.visible=!helper.visible;bonesButton.setAttribute('aria-pressed',helper.visible);
+ bonesButton.textContent=helper.visible?'隐藏骨架':'显示骨架';render();
+};
 pose.oninput=yaw.oninput=render;new ResizeObserver(render).observe(stage);render();
 document.querySelector('#save').onclick=async()=>{
  const {GLTFExporter}=await import('three/addons/exporters/GLTFExporter.js');
