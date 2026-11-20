@@ -51,7 +51,8 @@ function pose(t){
   f.position.set(lx+(.08+.58*p)*Math.sin(a),.64+p*(1.52+.3*Math.sin(i)),lz+.24*Math.cos(a));
   f.scale.setScalar(.021*Math.sin(Math.PI*p));
  });
- el('line').textContent=t<2?'林子里最后一盏灯，也睡着了。':t<4.2?'一二伸手，轻轻碰醒了灯芯。':t<8?'原来，灯里住着一群萤火虫。':'两个人目送最后一点光飞进林子。';
+ const caption=t<2?'林子里最后一盏灯，也睡着了。':t<4.2?'一二伸手，轻轻碰醒了灯芯。':t<8?'原来，灯里住着一群萤火虫。':'两个人目送最后一点光飞进林子。';
+ if(el('line').textContent!==caption)el('line').textContent=caption;
 }
 let t=0,last,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,drag;
 function play(v){playing=v;el('play').textContent=v?'暂停':'播放';}play(playing);
