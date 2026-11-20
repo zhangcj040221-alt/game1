@@ -4,3 +4,4 @@ await cp('dist/index.html','index.html');await writeFile('.nojekyll','');console
 await cp('dist/compare.html','compare.html');
 
 await cp('dist/reference.html','reference.html');
+await cp('dist/breeze.html','breeze.html');
