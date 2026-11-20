@@ -6,10 +6,10 @@ import {bindStandingArms} from './standing-arm-rig.js';
 
 import {bindStandingBody,squatClip,anticipationClip} from './standing-body-rig.js';
 
-export function cameraStudy(){
+export function cameraStudy(yi=false){
  geometries.head??=volume();geometries.body??=bodyVolume();
- const actor=character(false,{pose:'standing'}), root=actor.root;
- root.name='Bubu';root.position.y=-new T.Box3().setFromObject(root,true).min.y;
+ const actor=character(yi,{pose:'standing'}), root=actor.root;
+ root.name=yi?'Yier':'Bubu';root.position.y=-new T.Box3().setFromObject(root,true).min.y;
  const tracks=[],times=[0,.35,1.75,2.35];
  const chains=bindStandingArms(actor);
  const upper=bindStandingBody(actor,chains);

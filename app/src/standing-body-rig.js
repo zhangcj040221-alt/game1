@@ -22,7 +22,19 @@ export function bindStandingBody(actor,chains){
   return [hip,knee,ankle];
  });
  root.updateMatrixWorld(true);
- const original=root.getObjectByName('standing-body'),g=original.geometry.clone(),p=g.attributes.position;
+ const pieces=root.children.filter(o=>['standing-body','standing-shoes'].includes(o.name));
+ const clothing=root.children.filter(o=>['neckband','bow-loop','bow-knot'].includes(o.name));
+ for(const piece of clothing)chest.attach(piece);
+ const meshes=pieces.map(original=>skinStandingPiece(original,root,bones,legs,pelvis,spine,chest));
+ const skeleton=new T.Skeleton(bones);
+ for(const m of [...meshes,...chains.map(chain=>chain.arm)])m.bind(skeleton);
+ old.dispose();
+ return old.bones[0];
+}
+
+// Evaluate the same weight field on both sides of the white-leg / dark-shoe seam.
+function skinStandingPiece(original,root,bones,legs,pelvis,spine,chest){
+ const g=original.geometry.clone(),p=g.attributes.position;
  const index=[],weights=[],smooth=T.MathUtils.smoothstep;
  for(let i=0;i<p.count;i++){
   const y=p.getY(i),x=p.getX(i),leg=legs[x<0?0:1];
@@ -47,10 +59,7 @@ export function bindStandingBody(actor,chains){
  g.setAttribute('skinIndex',new T.Uint16BufferAttribute(index,4));g.setAttribute('skinWeight',new T.Float32BufferAttribute(weights,4));
  const body=new T.SkinnedMesh(g,original.material);body.name=original.name;body.castShadow=body.receiveShadow=true;
  root.remove(original);root.add(body);root.updateMatrixWorld(true);
- const skeleton=new T.Skeleton(bones);
- for(const m of [body,...chains.map(chain=>chain.arm)])m.bind(skeleton);
- old.dispose();
- return old.bones[0];
+ return body;
 }
 
 // Both motions use the same planted two-link leg solution.
