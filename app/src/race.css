@@ -1,0 +1,4 @@
+@import './lantern.css';
+body{background:radial-gradient(ellipse at 50% 28%,#f8e0b6,#b7d4cd);color:#283e43}
+article{border-radius:26px;border:5px solid ivory;outline-color:#c6a578;background:linear-gradient(#91c9d4,#dae8dc 57%,#f7eccc 80%);box-shadow:0 14px 45px #36535144}
+header{padding:18px 25px 6px;color:#37575a}section{border-top:2px solid #edc179;background:#fff0ce;padding-top:13px}p{color:#5e5246}h1{color:#934737}button{color:white;background:#49605b}input{accent-color:#b85d45}
