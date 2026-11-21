@@ -27,7 +27,7 @@ for(const x of [-2.3,-1.85,1.8,2.3]){
 }
 const actors=[false,true].map(yi=>{
  const {root}=cameraStudy(yi);root.position.x=yi?.78:-.78;root.rotation.y=yi?-.22:.22;scene.add(root);
- return {palm:root.getObjectByName(yi?'R_Arm':'L_Arm'),head:root.getObjectByName('Head'),arm:root.getObjectByName(yi?'R_Shoulder':'L_Shoulder')};
+ return {root,palm:root.getObjectByName(yi?'R_Arm':'L_Arm'),head:root.getObjectByName('Head'),arm:root.getObjectByName(yi?'R_Shoulder':'L_Shoulder')};
 });
 const truck=new T.Group(),wheels=[];scene.add(truck);truck.scale.setScalar(.28);truck.rotation.y=Math.PI/2;
 for(const [name,[offset,parts]] of Object.entries(truckParts)){
@@ -36,7 +36,7 @@ for(const [name,[offset,parts]] of Object.entries(truckParts)){
   const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(coords.map(v=>v/1000),3));geo.setIndex(indices);geo.computeVertexNormals();mesh(part,geo,clay(color));
  }
 }
-const pennant=new T.Group();scene.add(pennant);pennant.position.set(1.42,.55,.12);
+const pennant=new T.Group();scene.add(pennant);pennant.scale.setScalar(.68);
 mesh(pennant,new T.CylinderGeometry(.015,.019,.87,12),cream,0,.43,0);
 for(let x=0;x<4;x++)for(let y=0;y<3;y++)block(pennant,(x+y)%2?road:cream,.045+x*.08,.68+y*.08,0,.081,.081,.018);
 function pose(t){
@@ -48,10 +48,10 @@ function pose(t){
   head.rotation.set(.14-.10*cheer,-.35+.69*(go-ease(t,7.6,9.4)),0);
   arm.rotation.set(-.18-.39*cheer,0,(i?1:-1)*(.32+.45*cheer));
  });
- const palm=actors[1].palm;palm.updateWorldMatrix(true,false);
+ const {root,palm}=actors[1];root.updateWorldMatrix(true,true);
  palm.getVertexPosition(palm.geometry.attributes.position.count-1,pennant.position);
  palm.localToWorld(pennant.position);
- pennant.rotation.z=.12+cheer*(.23+.30*Math.sin(7*t));
+ pennant.rotation.set(.24,0,-.82+.14*cheer*Math.sin(7*t));
  const line=t<1.85?'发车前，两位裁判屏住了呼吸。':t<4.4?'红色小车沿着海岸线冲了过来。':t<7?'冲线！一二摇起了方格旗。':'布布宣布：今天的冠军只有巴掌大。';
  if(el('line').textContent!==line)el('line').textContent=line;
 }
