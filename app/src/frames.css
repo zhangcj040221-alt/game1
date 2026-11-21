@@ -35,3 +35,28 @@ body:not(.live) footer{visibility:hidden}.still #line{visibility:visible}
  width:4cqw;height:4cqw;margin-right:2.15cqw;border-radius:.45cqw;
  background-size:2cqw 2cqw;box-shadow:inset 0 0 .3cqw #74594a77;
 }
+
+.podium,.enamel{display:none}
+.medal .base{
+ background:linear-gradient(#e8cfaa,#dec29c 57%,#e4cba6);
+ border-top:1px solid #b89b78;
+}
+.medal .podium{display:block;position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.medal .base h2{
+ margin-top:1.4cqw;padding:0;border:0;border-radius:0;background:none;box-shadow:none;
+ color:#663c2c;font-size:6.4cqw;letter-spacing:.11em;text-shadow:0 .25cqw #fff1d5;
+}
+.medal .base h2::before{display:none}
+.enamel{position:relative;isolation:isolate;overflow:hidden}
+.medal .enamel{
+ display:grid;place-items:center;width:9.25cqw;height:9.25cqw;margin-right:2.4cqw;border-radius:50%;
+ border:.5cqw solid #c89d63;background:linear-gradient(145deg,#548777,#274f4c);
+ box-shadow:0 -.3cqw .4cqw #b29066,0 .45cqw .3cqw #fff0cc,inset 0 0 0 .32cqw #f4d49b;
+}
+.enamel svg{width:87%;height:87%}
+.enamel::after{
+ content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ background:conic-gradient(from var(--glint,0deg),transparent 2%,#fff4c8 13%,transparent 27%,transparent 100%);
+ mask:radial-gradient(circle,transparent 62%,black 66%);opacity:.85;
+}
+@media(prefers-reduced-motion:reduce){.enamel::after{background:none}}
