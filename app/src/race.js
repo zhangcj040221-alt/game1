@@ -27,7 +27,8 @@ for(const x of [-2.3,-1.85,1.8,2.3]){
 }
 const actors=[false,true].map(yi=>{
  const {root}=cameraStudy(yi);root.position.x=yi?.78:-.78;root.rotation.y=yi?-.22:.22;scene.add(root);
- return {root,palm:root.getObjectByName(yi?'R_Arm':'L_Arm'),head:root.getObjectByName('Head'),arm:root.getObjectByName(yi?'R_Shoulder':'L_Shoulder')};
+ const arm=root.getObjectByName(yi?'R_Shoulder':'L_Shoulder');
+ return {root,restShoulder:arm.position.clone(),palm:root.getObjectByName(yi?'R_Arm':'L_Arm'),head:root.getObjectByName('Head'),arm};
 });
 const truck=new T.Group(),wheels=[];scene.add(truck);truck.scale.setScalar(.28);truck.rotation.y=Math.PI/2;
 for(const [name,[offset,parts]] of Object.entries(truckParts)){
@@ -44,9 +45,13 @@ function pose(t){
  // Return behind the stage while out of frame.
  truck.position.set(-2.75+5.65*go,.019,.78);truck.visible=t<7;
  wheels.forEach(w=>w.rotation.x=go*65);
- actors.forEach(({head,arm},i)=>{
+ actors.forEach(({head,arm,restShoulder},i)=>{
   head.rotation.set(.14-.10*cheer,-.35+.69*(go-ease(t,7.6,9.4)),0);
-  arm.rotation.set(-.18-.39*cheer,0,(i?1:-1)*(.32+.45*cheer));
+  if(i){
+   arm.position.copy(restShoulder);
+   arm.position.x+=.065;arm.position.y-=.052;arm.position.z+=.085;
+   arm.rotation.set(-.16-.17*cheer,0,.35+.20*cheer);
+  }else arm.rotation.set(-.18-.39*cheer,0,-(.32+.45*cheer));
  });
  const {root,palm}=actors[1];root.updateWorldMatrix(true,true);
  palm.getVertexPosition(palm.geometry.attributes.position.count-1,pennant.position);
