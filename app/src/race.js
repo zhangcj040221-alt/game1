@@ -3,6 +3,7 @@ import * as T from 'three';
 import {cameraStudy} from './camera-rig.js';
 import {addSculptLights} from './sculpt-studio.js';
 import {ball,mesh,clay} from './character-volume.js';
+function startRace(){
 const el=id=>document.getElementById(id),stage=el('stage'),scene=new T.Scene();
 const renderer=new T.WebGLRenderer({alpha:true,antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.toneMapping=T.ACESFilmicToneMapping;stage.append(renderer.domElement);addSculptLights(scene);
@@ -88,3 +89,13 @@ renderer.setAnimationLoop(now=>{if(playing){t=(t+Math.min((now-(last??now))/1000
   copy.clearRect(0,0,mirror.width,mirror.height);copy.drawImage(canvas,0,0);
  }
 });
+}
+try{
+ startRace();
+ document.body.classList.add('live');
+}catch(error){
+ if(!document.getElementById('mirror'))throw error;
+ document.getElementById('line').textContent='当前显示冲线定格图。';
+ document.body.classList.add('still');
+ console.warn(error);
+}
