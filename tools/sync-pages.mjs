@@ -10,3 +10,4 @@ await cp('dist/duet.html','duet.html');
 await cp('dist/step.html','step.html');
 await cp('dist/lantern.html','lantern.html');
 await cp('dist/race.html','race.html');
+await cp('dist/frames.html','frames.html');
