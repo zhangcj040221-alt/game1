@@ -1,0 +1,152 @@
+{
+  "version": "R06-cross-view-sculpt",
+  "status": "pending",
+  "basis": "Cross-view study from supplied figurine photos; camera estimates and sculpted sections, not official dimensions.",
+  "sections": [
+    [
+      -0.50522,
+      0,
+      -0.035,
+      -0.035,
+      0.82
+    ],
+    [
+      -0.48417,
+      0.32,
+      0.16,
+      -0.235,
+      0.8
+    ],
+    [
+      -0.44733,
+      0.51,
+      0.33,
+      -0.405,
+      0.79
+    ],
+    [
+      -0.37891,
+      0.605,
+      0.46,
+      -0.505,
+      0.8
+    ],
+    [
+      -0.28,
+      0.645,
+      0.515,
+      -0.567,
+      0.82
+    ],
+    [
+      -0.205,
+      0.652,
+      0.517,
+      -0.6,
+      0.83
+    ],
+    [
+      -0.115,
+      0.65,
+      0.487,
+      -0.626,
+      0.85
+    ],
+    [
+      0.015,
+      0.64,
+      0.476,
+      -0.643,
+      0.88
+    ],
+    [
+      0.15,
+      0.609,
+      0.45,
+      -0.629,
+      0.92
+    ],
+    [
+      0.3,
+      0.527,
+      0.383,
+      -0.574,
+      0.96
+    ],
+    [
+      0.41575,
+      0.41,
+      0.29244,
+      -0.478,
+      1.0
+    ],
+    [
+      0.51574,
+      0.225,
+      0.13293,
+      -0.30839,
+      1.0
+    ],
+    [
+      0.55785,
+      0,
+      -0.06912,
+      -0.06912,
+      1.0
+    ]
+  ],
+  "eye": {
+    "x": 0.24902,
+    "y": -0.11555,
+    "rx": 0.049,
+    "ry": 0.051
+  },
+  "mouthYOffset": 0.05791,
+  "blush": {
+    "x": 0.445,
+    "y": -0.29471,
+    "radius": 0.103
+  },
+  "ear": {
+    "x": 0.45,
+    "y": 0.433,
+    "z": -0.065,
+    "radius": [
+      0.126,
+      0.132,
+      0.084
+    ],
+    "outwardTilt": 0.48,
+    "yaw": 0.24,
+    "surface": "Shallow continuous ear cup, curved crescent pigment, crown-occluded base; solid dark Yi-Er ears.",
+    "initialFitCentre": [
+      0.46202,
+      0.48081,
+      -0.05849
+    ],
+    "rootInsetNote": "Lowered and inset after same-view comparison to bury the lower rim in the crown; camera estimates retained for visual checking.",
+    "solidRadius": [
+      0.121,
+      0.128,
+      0.096
+    ],
+    "cup": {
+      "width": 0.097,
+      "height": 0.11,
+      "y": 0.024,
+      "depth": 0.024,
+      "paintY": 0.002
+    }
+  },
+  "cameraFit": {
+    "kind": "bounded joint weak-perspective fit",
+    "shapeFactors": {
+      "height": 1.0525405638818193,
+      "depth": 1.0634078201597028
+    },
+    "limitations": "Inherited R04 camera estimates, not re-fitted or calibrated for R06. No precise pure-side/rear reference. Former landmark errors do not validate this revision."
+  },
+  "capProfile": "elliptical closure at crown and chin",
+  "revision": "Decouple temple from front projection; soften mouth-to-lower-face ledge; retain broad continuous chin; round lower occiput; shallow ear cup and crescent paint. Pending visual approval.",
+  "sidePlaneZ": -0.065
+}

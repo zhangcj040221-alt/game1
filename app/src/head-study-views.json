@@ -1,7 +1,7 @@
 [
   {
     "id": "standing-bubu",
-    "file": "IMG_5507(1).jpeg",
+    "file": "IMG_5507(2).jpeg",
     "crop": [
       680,
       475,
@@ -50,48 +50,52 @@
       "tx": 847.302,
       "ty": 619.512
     },
-    "landmarkRmsPixels": 0.68,
-    "projectedLandmarks": [
-      [
-        733.2160531267382,
-        643.0379469844731
+    "note": "Inherited R04 viewing estimate, reused identically for R05/R06; historical fit error does not measure R06 agreement.",
+    "label": "拿相机的布布 · 低机位",
+    "character": "bubu",
+    "historicalR04Fit": {
+      "landmarkRmsPixels": 0.68,
+      "projectedLandmarks": [
+        [
+          733.2160531267382,
+          643.0379469844731
+        ],
+        [
+          827.7905783584,
+          649.049104758318
+        ],
+        [
+          758.2539529062709,
+          499.7995585477048
+        ],
+        [
+          933.727826502578,
+          510.9526797163424
+        ]
       ],
-      [
-        827.7905783584,
-        649.049104758318
-      ],
-      [
-        758.2539529062709,
-        499.7995585477048
-      ],
-      [
-        933.727826502578,
-        510.9526797163424
+      "observedLandmarks": [
+        [
+          731.7,
+          642.9
+        ],
+        [
+          827.6,
+          649.2
+        ],
+        [
+          757.6,
+          500.3
+        ],
+        [
+          934.5,
+          511.1
+        ]
       ]
-    ],
-    "observedLandmarks": [
-      [
-        731.7,
-        642.9
-      ],
-      [
-        827.6,
-        649.2
-      ],
-      [
-        757.6,
-        500.3
-      ],
-      [
-        934.5,
-        511.1
-      ]
-    ],
-    "note": "Approximate weak-perspective head fit; excludes pose and props, not a calibrated camera."
+    }
   },
   {
     "id": "riding-bubu-a",
-    "file": "IMG_5509(1).jpeg",
+    "file": "IMG_5509(2).jpeg",
     "crop": [
       685,
       250,
@@ -140,48 +144,52 @@
       "tx": 841.568,
       "ty": 390.951
     },
-    "landmarkRmsPixels": 0.54,
-    "projectedLandmarks": [
-      [
-        750.9862044397739,
-        424.9047609530423
+    "note": "Inherited R04 viewing estimate, reused identically for R05/R06; historical fit error does not measure R06 agreement.",
+    "label": "骑坐布布 · 俯视第一方向",
+    "character": "bubu",
+    "historicalR04Fit": {
+      "landmarkRmsPixels": 0.54,
+      "projectedLandmarks": [
+        [
+          750.9862044397739,
+          424.9047609530423
+        ],
+        [
+          831.3695242069651,
+          447.01678388856
+        ],
+        [
+          766.2637742433353,
+          285.58811334919034
+        ],
+        [
+          915.4072402827237,
+          326.61483072410033
+        ]
       ],
-      [
-        831.3695242069651,
-        447.01678388856
-      ],
-      [
-        766.2637742433353,
-        285.58811334919034
-      ],
-      [
-        915.4072402827237,
-        326.61483072410033
+      "observedLandmarks": [
+        [
+          751.9,
+          424.0
+        ],
+        [
+          831.2,
+          447.0
+        ],
+        [
+          766.1,
+          286.3
+        ],
+        [
+          915.1,
+          326.5
+        ]
       ]
-    ],
-    "observedLandmarks": [
-      [
-        751.9,
-        424.0
-      ],
-      [
-        831.2,
-        447.0
-      ],
-      [
-        766.1,
-        286.3
-      ],
-      [
-        915.1,
-        326.5
-      ]
-    ],
-    "note": "Approximate weak-perspective head fit; excludes pose and props, not a calibrated camera."
+    }
   },
   {
     "id": "riding-bubu-b",
-    "file": "IMG_5510(1).jpeg",
+    "file": "IMG_5510(2).jpeg",
     "crop": [
       415,
       640,
@@ -230,43 +238,89 @@
       "tx": 555.279,
       "ty": 782.361
     },
-    "landmarkRmsPixels": 0.73,
-    "projectedLandmarks": [
-      [
-        569.1510383825233,
-        842.1113124857349
+    "note": "Inherited R04 viewing estimate, reused identically for R05/R06; historical fit error does not measure R06 agreement.",
+    "label": "骑坐布布 · 俯视反方向",
+    "character": "bubu",
+    "historicalR04Fit": {
+      "landmarkRmsPixels": 0.73,
+      "projectedLandmarks": [
+        [
+          569.1510383825233,
+          842.1113124857349
+        ],
+        [
+          649.4239693949214,
+          819.6920092016195
+        ],
+        [
+          485.1968351050848,
+          717.0827419067815
+        ],
+        [
+          634.1354854992709,
+          675.4858956000437
+        ]
       ],
-      [
-        649.4239693949214,
-        819.6920092016195
-      ],
-      [
-        485.1968351050848,
-        717.0827419067815
-      ],
-      [
-        634.1354854992709,
-        675.4858956000437
+      "observedLandmarks": [
+        [
+          569.1,
+          842.5
+        ],
+        [
+          648.3,
+          820.1
+        ],
+        [
+          485.5,
+          715.8
+        ],
+        [
+          633.2,
+          675.2
+        ]
       ]
+    }
+  },
+  {
+    "id": "standing-yier",
+    "file": "IMG_5507(2).jpeg",
+    "label": "抱爱心的一二 · 接近正面",
+    "character": "yier",
+    "crop": [
+      280,
+      470,
+      595,
+      745
     ],
-    "observedLandmarks": [
-      [
-        569.1,
-        842.5
-      ],
-      [
-        648.3,
-        820.1
-      ],
-      [
-        485.5,
-        715.8
-      ],
-      [
-        633.2,
-        675.2
-      ]
+    "camera": {
+      "yaw": -3,
+      "pitch": 2,
+      "roll": 0,
+      "scale": 222,
+      "tx": 439,
+      "ty": 610
+    },
+    "note": "Manual viewing estimate; wink and mouth expression excluded."
+  },
+  {
+    "id": "riding-yier",
+    "file": "IMG_5509(2).jpeg",
+    "label": "骑鳄鱼的一二 · 俯视",
+    "character": "yier",
+    "crop": [
+      710,
+      715,
+      1030,
+      1025
     ],
-    "note": "Approximate weak-perspective head fit; excludes pose and props, not a calibrated camera."
+    "camera": {
+      "yaw": 33,
+      "pitch": 26,
+      "roll": -5,
+      "scale": 210,
+      "tx": 875,
+      "ty": 880
+    },
+    "note": "Manual viewing estimate; head pitch and camera elevation are not separately calibrated."
   }
 ]

@@ -4,3 +4,10 @@ await cp('dist/index.html','index.html');await writeFile('.nojekyll','');console
 await cp('dist/compare.html','compare.html');
 
 await cp('dist/reference.html','reference.html');
+await cp('dist/breeze.html','breeze.html');
+await cp('dist/camera-rig.html','camera-rig.html');
+await cp('dist/duet.html','duet.html');
+await cp('dist/step.html','step.html');
+await cp('dist/lantern.html','lantern.html');
+await cp('dist/race.html','race.html');
+await cp('dist/frames.html','frames.html');

@@ -2,6 +2,7 @@ name: Build and verify card prototype
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,6 +17,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run test:geometry
       - run: npm run build
       - run: google-chrome --version
       - run: npx playwright test
