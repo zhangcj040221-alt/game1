@@ -28,6 +28,14 @@ for(const x of [-2.3,-1.85,1.8,2.3]){
 const actors=[false,true].map(yi=>{
  const {root}=cameraStudy(yi);root.position.x=yi?.78:-.78;root.rotation.y=yi?-.22:.22;scene.add(root);
  const arm=root.getObjectByName(yi?'R_Shoulder':'L_Shoulder');
+ if(!yi){
+  // Lower both arm roots under the jaw before animating the cheering paw.
+  const arms=root.getObjectByName('ArmRig');
+  arms.position.y-=.072;
+  const resting=root.getObjectByName('R_Shoulder');
+  resting.position.x+=.055;resting.position.z+=.062;
+  resting.rotation.set(-.16,0,.34);
+ }
  return {root,restShoulder:arm.position.clone(),palm:root.getObjectByName(yi?'R_Arm':'L_Arm'),head:root.getObjectByName('Head'),arm};
 });
 const truck=new T.Group(),wheels=[];scene.add(truck);truck.scale.setScalar(.28);truck.rotation.y=Math.PI/2;
@@ -51,7 +59,11 @@ function pose(t){
    arm.position.copy(restShoulder);
    arm.position.x+=.065;arm.position.y-=.052;arm.position.z+=.085;
    arm.rotation.set(-.16-.17*cheer,0,.35+.20*cheer);
-  }else arm.rotation.set(-.18-.39*cheer,0,-(.32+.45*cheer));
+  }else{
+   arm.position.copy(restShoulder);
+   arm.position.x-=.044;arm.position.z+=.065;
+   arm.rotation.set(-.18-.18*cheer,0,-(.32+.20*cheer));
+  }
  });
  const {root,palm}=actors[1];root.updateWorldMatrix(true,true);
  palm.getVertexPosition(palm.geometry.attributes.position.count-1,pennant.position);
