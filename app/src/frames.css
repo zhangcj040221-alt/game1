@@ -3,3 +3,35 @@ footer{align-items:center;gap:22px;max-width:550px;margin:12px auto}button{curso
 @media(max-width:699px){main{width:min(92vw,410px);margin:14px auto}.switch{display:flex;gap:3px}.switch button{font-size:13px;padding:6px 12px}.switch [aria-pressed=true]{background:#485950;color:#fff}.second{display:none}figcaption{margin-top:5px}footer{gap:13px}}
 body:not(.live) .stage{background:url('./race/finish.webp') center/100% 100% no-repeat}
 body:not(.live) footer{visibility:hidden}.still #line{visibility:visible}
+
+/* Preserve the scene projection; trim the clay rails around the aperture. */
+.refined .rim{
+ border-width:9.1cqw 2.7cqw 3.6cqw;
+ border-color:#e9d5b3 #ead6b3 #dfc59e;
+ box-shadow:inset 0 0 0 .28cqw #a18869,inset 0 .7cqw 1.25cqw #62462c36;
+}
+.refined .lip{
+ box-shadow:inset .3cqw .65cqw .8cqw #fff6de,inset -.45cqw -.85cqw .9cqw #ae9475;
+}
+.refined .brand{
+ z-index:4;left:6.2%;right:6.2%;top:0;height:9.1cqw;
+ padding-top:.5cqw;color:#634c38;font-size:3.15cqw;font-weight:650;
+ text-shadow:0 1px #fff7e4;pointer-events:none;
+}
+.refined .brand span{font-size:2.85cqw;font-weight:450;letter-spacing:.1em}
+.refined .base{
+ height:16.3%;border-top:1px solid #a99171;
+ background:linear-gradient(#efdbb9,#ead3ad 68%,#dfc59e);
+}
+.refined .base h2{
+ display:flex;align-items:center;padding:1.55cqw 4.25cqw 1.65cqw;
+ font-size:6.1cqw;line-height:1.28;letter-spacing:.08em;color:#663f30;
+ border:1px solid #bfa17b;border-radius:2.65cqw;
+ background:linear-gradient(165deg,#fbeacd,#f0daba);
+ box-shadow:0 -.35cqw .55cqw #95775755,0 .4cqw .35cqw #fff3d9,
+            inset 0 .25cqw .4cqw #fff6e3,inset 0 -.4cqw .5cqw #d8bc965e;
+}
+.refined .base h2::before{
+ width:4cqw;height:4cqw;margin-right:2.15cqw;border-radius:.45cqw;
+ background-size:2cqw 2cqw;box-shadow:inset 0 0 .3cqw #74594a77;
+}

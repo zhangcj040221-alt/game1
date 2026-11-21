@@ -1,18 +1,17 @@
 import './race.js';
 const first=document.querySelector('.first'),card=first.querySelector('.card');
-for(const id of ['a','b']){
- document.getElementById(id).onclick=()=>{
-  first.dataset.selected=id;
-  document.getElementById('a').setAttribute('aria-pressed',id==='a');
-  document.getElementById('b').setAttribute('aria-pressed',id==='b');
-  update();
- };
-}
 const narrow=matchMedia('(max-width: 699px)');
+let selected='refined';
 function update(){
- const thick=narrow.matches&&first.dataset.selected==='b';
- card.classList.toggle('thick',thick);card.classList.toggle('thin',!thick);
- first.querySelector('figcaption').textContent=thick?'B · 软陶厚框':'A · 薄边画窗';
+ const refined=!narrow.matches||selected==='refined';
+ card.classList.toggle('refined',refined);
+ first.querySelector('figcaption').textContent=refined?'B · 精修款':'B · 原款';
+ for(const id of ['refined','original']){
+  document.getElementById(id).setAttribute('aria-pressed',String(id===selected));
+ }
+}
+for(const id of ['refined','original']){
+ document.getElementById(id).onclick=()=>{selected=id;update();};
 }
 narrow.addEventListener('change',update);
 const mirror=document.getElementById('mirror'),angle=document.getElementById('angle');
