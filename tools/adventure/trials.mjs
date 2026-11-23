@@ -199,6 +199,7 @@ for (const [name, path] of Object.entries(routes)) {
           ? "失去留牌"
           : "补课",
         deathOnCapture: name === "捕获遗留",
+        mageResilience: !process.argv.includes("--no-mage-resilience"),
         staggerPatterns: !process.argv.includes("--original"),
       });
       let safety = 0;

@@ -354,7 +354,21 @@ test("一二魔法失衡首领需一次正常意图恢复，骑士完美格挡�
   play(mage, 1);
   assert.equal(mage.enemies[0].stun, false);
   end(mage);
-  assert.equal(mage.enemies[0].mageBreakReady, true);
+  assert.equal(mage.enemies[0].mageBreakReady, false); // 准备意图不解除魔法韧性
+  end(mage);
+  assert.equal(mage.enemies[0].mageBreakReady, true); // 实际攻击才解除
+  const small = start("一二", 1);
+  hand(small, ["镜", "星弹"]);
+  play(small, 0);
+  play(small, 1);
+  assert.equal(small.enemies[0].mageBreakReady, false);
+  end(small);
+  hand(small, ["镜", "星弹"]);
+  play(small, 0);
+  play(small, 1);
+  assert.equal(small.enemies[0].stun, false);
+  end(small);
+  assert.equal(small.enemies[0].mageBreakReady, true);
   const knight = start("骑士", 1);
   knight.armor = 4;
   end(knight);

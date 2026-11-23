@@ -23,6 +23,7 @@ export const config = {
   capture: 0.4,
   chance: 0.6,
   deathOnCapture: false,
+  mageResilience: true,
   staggerPatterns: true,
   penalty: "补课",
   shieldEntry: 2,
@@ -485,11 +486,11 @@ function ordinary(s, c, e, i) {
       ((s.mirror && c === "星弹") || (e.mark && c !== "星印"))
     ) {
       // 只限制一二的魔法连锁，不改变骑士拼招与老师主导课堂。
-      if (e.kind !== "boss" || e.mageBreakReady) {
+      if (!s.cfg.mageResilience || e.mageBreakReady) {
         e.stun = true;
-        if (e.kind === "boss") e.mageBreakReady = false;
+        if (s.cfg.mageResilience) e.mageBreakReady = false;
         log(s, "魔法连锁 · 失衡");
-      } else log(s, "首领仍在魔法韧性窗口，未再次失衡");
+      } else log(s, "目标仍在魔法韧性窗口，未再次失衡");
       e.mark = false;
       s.mirror = false;
     }
@@ -706,9 +707,9 @@ export function end(s) {
         log(s, foes[e.kind] + "攻击 " + n + " · 受到 " + lost + " 伤害");
         if (!lost && s.mirror) {
           s.mirror = false;
-          if (e.kind !== "boss" || e.mageBreakReady) {
+          if (!s.cfg.mageResilience || e.mageBreakReady) {
             e.stun = true;
-            if (e.kind === "boss") e.mageBreakReady = false;
+            if (s.cfg.mageResilience) e.mageBreakReady = false;
           }
           hit(s, e, 3);
         }
@@ -718,8 +719,8 @@ export function end(s) {
       const target = alive(s).find((x) => x !== e) || e;
       target.armor = chapter(s) + 1;
     }
-    // 首领完整执行过一次意图后，魔法连锁才可重新使其失衡。
-    if (e.kind === "boss" && !wasStunned && !e.stun) e.mageBreakReady = true;
+    // 仅一二来源的魔法失衡受限；目标必须实际发起一次攻击才会解除魔法韧性。
+    if (s.cfg.mageResilience && d > 0 && !wasStunned && !e.stun) e.mageBreakReady = true;
     e.step++;
     e.reduce = 0;
     if (!s.hp) break;

@@ -46,7 +46,7 @@ const descriptions = {
   重击: "攻击6",
   木盾: "获得4甲",
   步法: "2甲，抽1",
-  星弹: "攻击4；追击失衡3，镜可引发失衡（首领魔法失衡需要间隔一次正常意图）",
+  星弹: "攻击4；追击失衡3，镜可引发失衡；同一目标真正攻击一次后才能再被魔法打断",
   镜: "4甲；全挡时反射3并打断",
   回声: "下一张其他魔法重复一次",
   双星: "两段攻击2",
@@ -115,7 +115,7 @@ function home() {
     (previous ? btn("继续上次试玩", "resume") : "") +
     '<details><summary>试玩设置</summary><label>牌序种子<input id="seed" type="number" value="' +
     (Number(params.get("seed")) || Math.floor(Math.random() * 999999)) +
-    '"></label><label>教案失败<select id="pen"><option>补课</option><option>失去留牌</option></select></label><label><input id="timing" type="checkbox" checked>后排错峰与终章重击后休整</label><label><input id="death" type="checkbox">捕获触发死亡遗留（对照）</label></details></section>';
+    '"></label><label>教案失败<select id="pen"><option>补课</option><option>失去留牌</option></select></label><label><input id="timing" type="checkbox" checked>后排错峰与终章重击后休整</label><label><input id="death" type="checkbox">捕获触发死亡遗留（对照）</label><label><input id="mage" type="checkbox" checked>一二魔法韧性（对照可关闭）</label></details></section>';
 }
 function formatPlan() {
   const p = s.plan;
@@ -195,6 +195,7 @@ function scene() {
             e.armor +
             (s.role === "小偷" ? " · 币" + e.coins : "") +
             (e.device ? " · " + e.device + (e.deviceBoost ? " 精修+" + e.deviceBoost : "") : "") +
+            (s.role === "一二" && s.cfg.mageResilience && e.mageBreakReady === false ? " · 魔法韧性" : "") +
             "</small><small>" +
             (e.stun
               ? "失衡 · 跳过"
@@ -520,6 +521,7 @@ app.onclick = (ev) => {
     s = start(v, Number(document.querySelector("#seed").value), {
       penalty: document.querySelector("#pen").value,
       deathOnCapture: document.querySelector("#death").checked,
+      mageResilience: document.querySelector("#mage").checked,
       staggerPatterns: document.querySelector("#timing").checked,
     });
     if (v === "小偷" && route === "thief") s.phase = "shop";
