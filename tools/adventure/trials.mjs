@@ -18,6 +18,7 @@ import { goods, machines } from "../../adventure/workshop.js";
 import { flavor, dishes } from "../../adventure/chef.js";
 const routes = {
   采购: ["小偷"],
+  采购续航: ["小偷"],
   机关: ["工程师", "精修", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
   机关纯替换: ["工程师", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
   纪律: [
@@ -29,7 +30,8 @@ const routes = {
     "强化 · 整顿课堂",
     "管攻管",
   ],
-  衔接: ["老师", "衔接", "讲管攻", "强化 · 衔接", "强化 · 临时加课", "预读"],
+  衔接: ["老师", "衔接", "强化 · 衔接", "强化 · 减势", "强化 · 临时加课", "管攻管"],
+  衔接无防护: ["老师", "衔接", "讲管攻", "强化 · 衔接", "强化 · 临时加课", "预读"],
   教材: [
     "老师",
     "指定教材",
@@ -64,7 +66,7 @@ function reward(s, path) {
   if (s.phase !== "growth") return 0;
   if (s.role === "厨师") {
     const mode = path[1] === "苦" ? "苦" : path[1] === "咸" ? "咸" : "甜";
-    const desired = mode === "苦" ? ["酸", "辣", "苦"] : mode === "咸" ? ["咸", "酸", "甜", "辣"] : ["酸", "辣", "甜", "咸"];
+    const desired = mode === "苦" ? ["酸", "辣", "苦"] : mode === "咸" ? ["咸", "酸", "甜", "辣"] : ["酸", "辣", "甜"];
     const count = (t) => s.deck.filter((c) => flavor(c) === t).length;
     const upgraded = (t) => s.deck.some((c) => dishes.includes(c) && flavor(c) === t);
     const attacks = s.deck.filter((c) => ["切片", "翻锅"].includes(c)).length;
@@ -74,7 +76,7 @@ function reward(s, path) {
       if (!desired.includes(target)) return { i, value: -10 };
       let value = dishes.includes(x.v) ? (upgraded(target) ? -8 : 18) : (count(target) ? -6 : 12);
       if (mode === "苦" && target === "苦") value += 5;
-      if (mode === "咸" && target === "咸") value += 5;
+      if (mode === "咸" && target === "咸") value += 11;
       if (target === "酸" && count(target) >= 2 && !dishes.includes(x.v)) value -= 15;
       if (["切片", "翻锅"].includes(from)) value -= attacks <= 3 ? 30 : 8;
       return { i, value };
@@ -114,7 +116,7 @@ function score(s) {
     s.echo * 1.3 +
     s.mirror * 1.5 +
     s.salt * 0.6 +
-    (s.role === "小偷" ? Math.min(s.gold, 10) * 1.6 : 0) +
+    (s.role === "小偷" && s.stage < 12 ? Math.min(s.gold, 10) * 1.6 : 0) +
     alive(s).reduce(
       (n, e) =>
         n +
@@ -151,7 +153,8 @@ function turn(s, reverse, capture, fixedFocus = false) {
             .filter(
               (k) =>
                 !["结束批改", "备课指定目标", "校盾减一"].includes(k) &&
-                (capture || k !== "捕获"),
+                (capture || k !== "捕获") &&
+                !(pos.stage === 12 && k === "顺手牵羊"),
             )
             .map((k) => ["core", k]),
         ];
@@ -202,9 +205,8 @@ for (const [name, path] of Object.entries(routes)) {
       while (!["clear", "lost"].includes(s.phase) && ++safety < 1800) {
         if (s.phase !== "fight") {
           if (s.phase === "shop") {
-            const order = stock(s).sort(
-              (a, b) => goods[b].uses - goods[a].uses,
-            );
+            const priority = (k) => ({ 急救包: 100, 折叠盾: 70, 袖箭: 50, 连发弩: 35, 烟雾弹: 30 })[k];
+            const order = stock(s).sort((a, b) => name === "采购续航" ? priority(b) - priority(a) : goods[b].uses - goods[a].uses);
             for (const name of order) buy(s, name);
           }
           advance(s, reward(s, path));
