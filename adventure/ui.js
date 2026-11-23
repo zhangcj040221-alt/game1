@@ -1,5 +1,9 @@
+import { goods, machines, gearLabel, gearText } from "./workshop.js";
 import {
   start,
+  buy,
+  stock,
+  map,
   advance,
   alive,
   choices,
@@ -66,6 +70,7 @@ const descriptions = {
   蓄雷: "攻击7",
   王印: "攻击8",
   ...recipes,
+  ...gearText,
 };
 const btn = (text, a, v = "", cls = "", disabled = false) =>
   '<button class="' +
@@ -79,7 +84,12 @@ const btn = (text, a, v = "", cls = "", disabled = false) =>
   ">" +
   text +
   "</button>";
-const names = { teacher: "老师", chef: "厨师" };
+const names = {
+  teacher: "老师",
+  chef: "厨师",
+  thief: "小偷",
+  engineer: "工程师",
+};
 const image = (role) =>
   '<img alt="" src="../characters/' +
   (role === "一二" ? "yier" : "bubu") +
@@ -92,12 +102,16 @@ function home() {
     '</div><div class="panel hero">' +
     image("布布") +
     btn(
-      names[route] ? names[route] + " · 成长试玩" : "布布 · 首战后选职业",
+      names[route]
+        ? names[route] + (route === "thief" ? " · 采购试玩" : " · 成长试玩")
+        : "布布 · 首战后选职业",
       "new",
       names[route] || "布布",
     ) +
     "</div>" +
-    (names[route] ? btn("直接试战后编排", "labedit", names[route]) : "") +
+    (names[route] && route !== "thief"
+      ? btn("直接试战后编排", "labedit", names[route])
+      : "") +
     (previous ? btn("继续上次试玩", "resume") : "") +
     '<details><summary>试玩设置</summary><label>牌序种子<input id="seed" type="number" value="' +
     (Number(params.get("seed")) || Math.floor(Math.random() * 999999)) +
@@ -179,6 +193,8 @@ function scene() {
             e.max +
             "　甲" +
             e.armor +
+            (s.role === "小偷" ? " · 币" + e.coins : "") +
+            (e.device ? " · " + e.device : "") +
             "</small><small>" +
             (e.stun
               ? "失衡 · 跳过"
@@ -202,6 +218,29 @@ function fight() {
     list = s.book ? s.bin : s.hand;
   return (
     scene() +
+    (s.role === "小偷"
+      ? '<section class="tray"><b>金币 ' +
+        s.gold +
+        " · 口袋 " +
+        s.pocket.length +
+        '/2</b><div class="row">' +
+        s.pocket
+          .map((x, i) => {
+            const k = gearLabel(x, i),
+              g = goods[x.name];
+            return btn(
+              k + "<small>" + g.cost + "行动 · " + g.desc + "</small>",
+              "ability",
+              k,
+              "card",
+              !buttons(s).includes(k),
+            );
+          })
+          .join("") +
+        "</div></section>"
+      : s.role === "工程师"
+        ? '<div class="tray">每个目标可装一件机关，新机关替换旧件。符合意图时自动触发，也可花1行动手动启动。</div>'
+        : "") +
     (s.role === "老师"
       ? (s.foresight || s.revealed?.length
           ? '<section class="tray" aria-live="polite"><b>已知牌顶</b>　' +
@@ -239,6 +278,7 @@ function fight() {
           (s.salt ? "　待保鲜" : "")
         : "") +
     buttons(s)
+      .filter((k) => !k.startsWith("口袋"))
       .map((k) => btn(k, "ability", k, "gold"))
       .join("") +
     "</div></div><h3>" +
@@ -287,21 +327,113 @@ function outcome() {
       (s.phase === "clear" ? "三章通关" : "冒险结束") +
       "</h1><p>第 " +
       (s.stage + 1) +
-      " 战，已完成 " +
-      s.growth +
-      " 次职业成长。</p>" +
+      (s.role === "小偷"
+        ? " 战，剩余 " + s.gold + " 金币。"
+        : " 战，已完成 " + s.growth + " 次职业成长。") +
+      "</p>" +
       btn("返回选角", "home") +
       "</section>"
     );
-  const all=choices(s);
-  if(s.role==="厨师"&&s.phase==="growth"){
-    const cards=all.slice(0,-1);
-    return '<section class="panel"><small>第 '+(s.growth+1)+' / 9 次成长</small><h1>料理研习</h1>'+
-      (cards.length?'<p>选一项替换牌组中的一张牌。</p>':'<p>所有调味料都已做成高级料理。</p>')+
-      '<div class="recipe-offers">'+cards.map((x,i)=>btn('<strong>'+x.label+'</strong><small>'+recipes[x.v]+'</small>',"next",i,"card")).join('')+
-      '</div>'+btn("保留现有配方，进入下一战","next",cards.length)+'</section>';
+  if (s.phase === "shop") {
+    const next = map[s.stage + 1][0]
+      .split(" ")
+      .map((k) => foes[k])
+      .join("、");
+    return (
+      '<section class="panel"><small>下一战 · ' +
+      next +
+      "</small><h1>行商货摊</h1><p>金币 " +
+      s.gold +
+      " · 口袋 " +
+      s.pocket.length +
+      "/2　" +
+      s.pocket.map(gearLabel).join("、") +
+      '</p><div class="recipe-offers">' +
+      stock(s)
+        .map((name) => {
+          const g = goods[name],
+            reason = s.sold.includes(name)
+              ? "已售"
+              : s.pocket.length >= 2
+                ? "口袋已满"
+                : s.gold < g.price
+                  ? "金币不足"
+                  : "购买";
+          return btn(
+            "<strong>" +
+              name +
+              " · " +
+              g.price +
+              "金币</strong><small>" +
+              g.uses +
+              "次 · 每次" +
+              g.cost +
+              "行动 · " +
+              g.desc +
+              "</small>" +
+              reason,
+            "buy",
+            name,
+            "card",
+            reason !== "购买",
+          );
+        })
+        .join("") +
+      "</div>" +
+      btn("前往下一战", "next", 0, "gold") +
+      "</section>"
+    );
   }
-  const groups=s.role==="老师"&&s.phase==="growth"?["改编","奖励位","强化","保留"]:[];
+  if (s.phase === "growth" && s.role === "工程师") {
+    return (
+      '<section class="panel"><h1>改装图纸</h1><p>选择一项替换牌组中的一张机关图纸。</p><div class="recipe-offers">' +
+      choices(s)
+        .map((x, i) =>
+          btn(
+            x.label + (x.v ? "<small>" + machines[x.v].desc + "</small>" : ""),
+            "next",
+            i,
+            "card",
+          ),
+        )
+        .join("") +
+      "</div></section>"
+    );
+  }
+  const all = choices(s);
+  if (s.role === "厨师" && s.phase === "growth") {
+    const cards = all.slice(0, -1);
+    return (
+      '<section class="panel"><small>第 ' +
+      (s.growth + 1) +
+      " / 9 次成长</small><h1>料理研习</h1>" +
+      (cards.length
+        ? "<p>选一项替换牌组中的一张牌。</p>"
+        : "<p>所有调味料都已做成高级料理。</p>") +
+      '<div class="recipe-offers">' +
+      cards
+        .map((x, i) =>
+          btn(
+            "<strong>" +
+              x.label +
+              "</strong><small>" +
+              recipes[x.v] +
+              "</small>",
+            "next",
+            i,
+            "card",
+          ),
+        )
+        .join("") +
+      "</div>" +
+      btn("保留现有配方，进入下一战", "next", cards.length) +
+      "</section>"
+    );
+  }
+  const groups =
+    s.role === "老师" && s.phase === "growth"
+      ? ["改编", "奖励位", "强化", "保留"]
+      : [];
   if (groups.length && !groups.includes(filter))
     filter = groups.find((g) => all.some((x) => x.label.startsWith(g)));
   const list = all
@@ -339,7 +471,7 @@ function outcome() {
       )
       .join("") +
     '</div><div class="row tray">' +
-    (list.length <= 3
+    (s.phase === "job" || list.length <= 3
       ? list.map((x) => btn(x.label, "next", x.i, "gold")).join("")
       : '<select id="option">' +
         list
@@ -390,12 +522,14 @@ app.onclick = (ev) => {
       deathOnCapture: document.querySelector("#death").checked,
       staggerPatterns: document.querySelector("#timing").checked,
     });
-    if (names[route] === v) {
+    if (v === "小偷" && route === "thief") s.phase = "shop";
+    else if (names[route] === v) {
       s.phase = "next";
       advance(s, 0);
       if (a === "labedit") s.phase = "growth";
     }
   }
+  if (a === "buy") buy(s, v);
   if (a === "resume") s = previous;
   if (a === "home") {
     previous = s;

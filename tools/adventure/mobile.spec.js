@@ -14,15 +14,16 @@ for (const [route, role] of [
     await expect(
       page.getByText("第 1 / 9 次成长", { exact: false }).first(),
     ).toBeVisible();
-    if(route==="chef"){
-      const offers=page.locator(".recipe-offers button");
+    if (route === "chef") {
+      const offers = page.locator(".recipe-offers button");
       await expect(offers).toHaveCount(3);
-      const labels=await offers.allTextContents();
-      await page.reload();await page.getByText("继续上次试玩").click();
+      const labels = await offers.allTextContents();
+      await page.reload();
+      await page.getByText("继续上次试玩").click();
       expect(await offers.allTextContents()).toEqual(labels);
       await expect(page.locator("select")).toHaveCount(0);
       await offers.nth(1).click();
-    }else{
+    } else {
       await page.locator("#option").selectOption({ index: 1 });
       await page.getByText("确认成长").click();
     }
@@ -87,4 +88,35 @@ test("预习可直接看牌、选牌，刷新保留剩余牌顶", async ({ page 
   await page.reload();
   await page.getByText("继续上次试玩").click();
   await expect(page.getByText("已知牌顶", { exact: true })).toBeVisible();
+});
+test("小偷购买后可看到口袋余量并使用", async ({ page }) => {
+  await page.goto("/adventure/?lab=thief&seed=5");
+  await page.getByText("小偷 · 采购试玩").click();
+  await expect(page.locator("[data-a=buy]")).toHaveCount(3);
+  await page.locator("[data-a=buy]:enabled").first().click();
+  await page.getByText("前往下一战").click();
+  await page.getByText("顺手牵羊", { exact: true }).click();
+  await page.locator('button[data-v^="口袋"]').first().click();
+  await expect(page.locator(".scene")).toContainText("币");
+});
+test("工程师可布置目标机关并手动启动", async ({ page }) => {
+  await page.goto("/adventure/?lab=engineer&seed=5");
+  await page.getByText("工程师 · 成长试玩").click();
+  for (
+    let i = 0;
+    i < 3 &&
+    !(await page
+      .locator(".hand button")
+      .filter({ hasText: /绊索|钻地鼠/ })
+      .count());
+    i++
+  )
+    await page.getByText("结束回合", { exact: true }).click();
+  await page
+    .locator(".hand button")
+    .filter({ hasText: /绊索|钻地鼠/ })
+    .first()
+    .click();
+  await page.getByText("手动启动", { exact: true }).click();
+  await expect(page.getByText("手动启动", { exact: true })).toHaveCount(0);
 });

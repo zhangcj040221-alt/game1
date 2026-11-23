@@ -1,5 +1,7 @@
 import {
   start,
+  buy,
+  stock,
   choices,
   advance,
   alive,
@@ -12,7 +14,10 @@ import {
   pick,
 } from "../../adventure/engine.js";
 import { writeFileSync } from "node:fs";
+import { goods, machines } from "../../adventure/workshop.js";
 const routes = {
+  采购: ["小偷"],
+  机关: ["工程师", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
   纪律: [
     "老师",
     "整顿课堂",
@@ -85,6 +90,16 @@ function score(s) {
     s.echo * 1.3 +
     s.mirror * 1.5 +
     s.salt * 0.6 +
+    (s.role === "小偷" ? Math.min(s.gold, 10) * 1.6 : 0) +
+    alive(s).reduce(
+      (n, e) =>
+        n +
+        (e.device
+          ? machines[e.device].n *
+            (machines[e.device].attack === Boolean(intent(s, e)) ? 0.85 : 0.35)
+          : 0),
+      0,
+    ) +
     s.extraDraw * 0.8
   );
 }
@@ -162,6 +177,12 @@ for (const [name, path] of Object.entries(routes)) {
       let safety = 0;
       while (!["clear", "lost"].includes(s.phase) && ++safety < 1800) {
         if (s.phase !== "fight") {
+          if (s.phase === "shop") {
+            const order = stock(s).sort(
+              (a, b) => goods[b].uses - goods[a].uses,
+            );
+            for (const name of order) buy(s, name);
+          }
           advance(s, reward(s, path));
           continue;
         }
@@ -264,7 +285,7 @@ for (const [name, path] of Object.entries(routes).filter(
         }
         focus.push({ name, g, reverse, ...p.ledger.at(-1) });
       }
-    if (g < 6 && trained.role !== "一二") {
+    if (g < 6 && !["一二", "小偷"].includes(trained.role)) {
       trained.stage = 1;
       trained.phase = "growth";
       advance(trained, reward(trained, path));

@@ -229,18 +229,86 @@ test("首领连击逐段抵甲，完美格挡取消后续一次意图", () => {
   end(s);
   assert.equal(s.hp, 27);
 });
-test('厨师成长只提供至多三个可执行且不同的具体替换',()=>{
- const samples=new Set();
- for(let seed=1;seed<=12;seed++){
-  const s=start("厨师",seed);s.phase="growth";const all=choices(s),offers=all.slice(0,-1);
-  assert.deepEqual(choices(structuredClone(s)),all);
-  assert.equal(new Set(offers.map(x=>x.label.slice(0,2))).size,3);
-  samples.add(offers.map(x=>x.label).join("/"));
-  assert.equal(advance(s,4),false);
-  const x=offers[1];advance(s,1);assert.equal(s.deck[x.i],x.v);assert.equal(s.deck.length,8);
- }
- assert.ok(samples.size>1);
- const s=start("厨师");s.phase="growth";s.deck=Array(8).fill("酸");
- const offers=choices(s).slice(0,-1);assert.equal(new Set(offers.map(x=>x.label)).size,3);
- s.deck.fill("蜜桃羹");assert.equal(choices(s).length,1);assert.ok(advance(s,0));
+test("厨师成长只提供至多三个可执行且不同的具体替换", () => {
+  const samples = new Set();
+  for (let seed = 1; seed <= 12; seed++) {
+    const s = start("厨师", seed);
+    s.phase = "growth";
+    const all = choices(s),
+      offers = all.slice(0, -1);
+    assert.deepEqual(choices(structuredClone(s)), all);
+    assert.equal(new Set(offers.map((x) => x.label.slice(0, 2))).size, 3);
+    samples.add(offers.map((x) => x.label).join("/"));
+    assert.equal(advance(s, 4), false);
+    const x = offers[1];
+    advance(s, 1);
+    assert.equal(s.deck[x.i], x.v);
+    assert.equal(s.deck.length, 8);
+  }
+  assert.ok(samples.size > 1);
+  const s = start("厨师");
+  s.phase = "growth";
+  s.deck = Array(8).fill("酸");
+  const offers = choices(s).slice(0, -1);
+  assert.equal(new Set(offers.map((x) => x.label)).size, 3);
+  s.deck.fill("蜜桃羹");
+  assert.equal(choices(s).length, 1);
+  assert.ok(advance(s, 0));
+});
+test("小偷首战选职、结算购物和多次道具跨战", async () => {
+  const { buy, stock } = await import("../../adventure/engine.js");
+  const { goods, gearLabel } = await import("../../adventure/workshop.js");
+  const s = start("布布", 2);
+  s.phase = "job";
+  advance(s, 3);
+  assert.equal(s.phase, "shop");
+  s.gold = 10;
+  const name = stock(s).find((k) => goods[k].uses > 1);
+  assert.ok(buy(s, name));
+  assert.equal(buy(s, name), false);
+  advance(s, 0);
+  let e = s.enemies[0],
+    before = e.coins;
+  ability(s, "顺手牵羊");
+  assert.ok(e.coins < before);
+  ability(s, gearLabel(s.pocket[0], 0));
+  const left = goods[name].uses - 1;
+  assert.equal(s.pocket[0].left, left);
+  s.phase = "shop";
+  advance(s, 0);
+  assert.equal(s.pocket[0].left, left);
+  assert.equal(s.growth, 0);
+});
+test("机关仅响应绑定目标的实际意图，触发一次", () => {
+  const s = pair("工程师");
+  hand(s, ["绊索", "钻地鼠"]);
+  play(s, 0);
+  s.target = 1;
+  play(s, 1);
+  end(s);
+  assert.equal(s.enemies[0].device, null);
+  assert.equal(s.enemies[1].device, "钻地鼠");
+  const hp = s.enemies[1].hp;
+  ability(s, "手动启动");
+  assert.equal(s.enemies[1].hp, hp - 8);
+  assert.equal(ability(s, "手动启动"), false);
+});
+test("口袋物品按实例扣次数，最后一次退场，偷空无收益", async () => {
+  const { gearLabel } = await import("../../adventure/workshop.js");
+  const s = pair("小偷");
+  s.pocket = [
+    { name: "袖箭", left: 2 },
+    { name: "袖箭", left: 1 },
+  ];
+  s.ap = 0;
+  ability(s, gearLabel(s.pocket[0], 0));
+  assert.equal(s.pocket[0].left, 1);
+  ability(s, gearLabel(s.pocket[1], 1));
+  assert.deepEqual(s.pocket, [{ name: "袖箭", left: 1 }]);
+  s.ap = 3;
+  s.enemies[s.target].coins = 1;
+  const gold = s.gold;
+  ability(s, "顺手牵羊");
+  assert.equal(s.gold, gold + 1);
+  assert.equal(ability(s, "顺手牵羊"), false);
 });

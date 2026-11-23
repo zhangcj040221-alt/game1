@@ -1,4 +1,13 @@
 import {
+  goods,
+  gearLabel,
+  machines,
+  trigger,
+  steal,
+  shopStock,
+  purchase,
+} from "./workshop.js";
+import {
   schoolDeck,
   initialPlan,
   edits,
@@ -52,6 +61,17 @@ export const decks = {
   骑士: knight,
   一二: mage,
   布布: base,
+  小偷: ["快刀", "快刀", "探囊", "探囊", "木盾", "木盾", "步法", "重击"],
+  工程师: [
+    "绊索",
+    "绊索",
+    "钻地鼠",
+    "钻地鼠",
+    "拆装锤",
+    "拆装锤",
+    "木盾",
+    "步法",
+  ],
 };
 export const chapter = (s) => (s.stage < 5 ? 1 : s.stage < 9 ? 2 : 3);
 export const rank = (s) =>
@@ -156,6 +176,9 @@ export function start(role = "布布", seed = 20261123, options = {}) {
   const s = {
     role,
     initial: seed,
+    gold: 5,
+    pocket: [],
+    sold: [],
     seed,
     stage: 0,
     hp: 30,
@@ -243,6 +266,9 @@ function enter(s) {
     spellUses: 0,
     order: [],
   });
+  if (s.role === "小偷")
+    for (const e of s.enemies)
+      e.coins = chapter(s) + (e.kind === "boss" ? 5 : 2);
   s.plannedAttack = intent(s, s.enemies[0]) > 0;
   draw(s, 4);
 }
@@ -266,6 +292,10 @@ function finish(s) {
           ? "growth"
           : "next";
   }
+  if (s.role === "小偷" && s.hp && s.stage < 12) {
+    s.phase = "shop";
+    s.sold = [];
+  }
   s.ledger.push({
     stage: s.stage + 1,
     growth: s.growth,
@@ -288,23 +318,50 @@ function finish(s) {
     order: [...s.order],
   });
 }
+export const stock = (s) => shopStock(s, shuffle);
+export const buy = (s, name) => purchase(s, name, stock(s));
 export function choices(s) {
   if (s.phase === "job")
-    return ["老师", "厨师", "骑士"].map((label) => ({ label }));
-  if (s.phase === "next") return [{ label: "进入下一战" }];
+    return ["老师", "厨师", "骑士", "小偷", "工程师"].map((label) => ({
+      label,
+    }));
+  if (s.phase === "next" || s.phase === "shop")
+    return [{ label: "进入下一战" }];
   if (s.phase !== "growth") return [];
+  if (s.role === "工程师") {
+    const pool = [];
+    for (const c of new Set(s.deck.filter((k) => machines[k])))
+      for (const v of Object.keys(machines)) {
+        if (c !== v && !s.deck.includes(v))
+          pool.push({ i: s.deck.indexOf(c), v, label: c + " → " + v });
+      }
+    return [
+      ...shuffle(
+        { seed: (s.initial ^ Math.imul(s.stage + 1, 2654435761)) >>> 0 },
+        pool,
+      ).slice(0, 3),
+      { label: "保留图纸" },
+    ];
+  }
   if (s.role === "老师") return edits(s.plan);
   if (s.role === "厨师") {
-    const pool = [...new Map(kitchenEdits(s.deck).map(x => [x.label,x])).values()];
+    const pool = [
+      ...new Map(kitchenEdits(s.deck).map((x) => [x.label, x])).values(),
+    ];
     // A separate seeded stream keeps the offers stable and leaves combat draws untouched.
-    shuffle({seed:(s.initial ^ Math.imul(s.stage+1,2654435761) ^ s.growth)>>>0},pool);
-    const offers=[];
-    for(const kind of ["提炼","转化","做菜"]){
-      const index=pool.findIndex(x=>x.label.startsWith(kind));
-      if(index>=0)offers.push(pool.splice(index,1)[0]);
+    shuffle(
+      {
+        seed: (s.initial ^ Math.imul(s.stage + 1, 2654435761) ^ s.growth) >>> 0,
+      },
+      pool,
+    );
+    const offers = [];
+    for (const kind of ["提炼", "转化", "做菜"]) {
+      const index = pool.findIndex((x) => x.label.startsWith(kind));
+      if (index >= 0) offers.push(pool.splice(index, 1)[0]);
     }
-    offers.push(...pool.slice(0,3-offers.length));
-    return [...offers,{label:"保留配方"}];
+    offers.push(...pool.slice(0, 3 - offers.length));
+    return [...offers, { label: "保留配方" }];
   }
   return [
     ...s.deck.flatMap((c, i) =>
@@ -321,6 +378,13 @@ export function advance(s, i) {
   if (s.phase === "job") {
     s.role = x.label;
     s.deck = [...decks[s.role]];
+    if (s.role === "小偷") {
+      s.gold = 5;
+      s.pocket = [];
+      s.sold = [];
+      s.phase = "shop";
+      return true;
+    }
   }
   if (s.phase === "growth") {
     s.growth++;
@@ -346,7 +410,16 @@ export function playable(s, i) {
   );
 }
 function ordinary(s, c, e) {
+  if (machines[c]) {
+    e.device = c;
+    log(s, "已布置" + c);
+    return;
+  }
+  if (c === "探囊") log(s, "探囊 · 金币 +" + steal(s, e, 1));
   let n = {
+    拆装锤: e.device ? 7 : 5,
+    快刀: 6,
+    探囊: 3,
     轻击: 5,
     重击: 6,
     斩击: 6,
@@ -436,6 +509,14 @@ export function play(s, i) {
 export function buttons(s) {
   if (s.phase !== "fight" || s.book || s.discardChoice) return [];
   const e = s.enemies[s.target];
+  if (s.role === "小偷")
+    return [
+      ...(s.ap && e.coins ? ["顺手牵羊"] : []),
+      ...s.pocket
+        .map(gearLabel)
+        .filter((k, i) => s.ap >= goods[s.pocket[i].name].cost),
+    ];
+  if (s.role === "工程师") return s.ap && e.device ? ["手动启动"] : [];
   if (s.role === "老师")
     return [
       ...(s.canTake
@@ -469,7 +550,26 @@ export function ability(s, k) {
   if (!buttons(s).includes(k)) return false;
   const e = s.enemies[s.target];
   log(s, k);
-  if (k.startsWith("取入手牌 · ")) {
+  if (k === "顺手牵羊") {
+    s.ap--;
+    log(s, "偷得 " + steal(s, e, intent(s, e) ? 2 : 3) + " 金币");
+  } else if (k === "手动启动") {
+    s.ap--;
+    trigger(s, e, api(s));
+  } else if (s.role === "小偷") {
+    const slot = s.pocket.findIndex((x, i) => gearLabel(x, i) === k),
+      item = s.pocket[slot];
+    s.ap -= goods[item.name].cost;
+    if (item.name === "袖箭") hit(s, e, 4);
+    if (item.name === "折叠盾") s.armor += 7;
+    if (item.name === "急救包") s.hp = Math.min(30, s.hp + 5);
+    if (item.name === "连发弩") {
+      hit(s, e, 4);
+      hit(s, e, 4);
+    }
+    if (item.name === "烟雾弹") e.stun = true;
+    if (!--item.left) s.pocket.splice(slot, 1);
+  } else if (k.startsWith("取入手牌 · ")) {
     const i = s.revealed.find((i) => k === "取入手牌 · " + s.deck[i]);
     s.pile.splice(s.pile.indexOf(i), 1);
     s.hand.push(i);
@@ -560,7 +660,12 @@ export function end(s) {
     else s.held = null;
   }
   for (const e of alive(s)) {
+    if (!e.hp) continue;
     const d = intent(s, e);
+    if (!e.stun && e.device && machines[e.device].attack === Boolean(d)) {
+      trigger(s, e, api(s));
+      if (!e.hp) continue;
+    }
     if (e.stun) {
       log(s, foes[e.kind] + "失衡 · 跳过意图");
       e.stun = false;
