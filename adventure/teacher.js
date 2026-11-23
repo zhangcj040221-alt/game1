@@ -92,6 +92,7 @@ export function contribute(s, api) {
   api.log(
     "主导课堂开启 · 全体 " + s.cfg.burst + " 伤害，幸存目标各跳过一次意图",
   );
+  if (!api.live().length) return;
   if (s.plan.mastery === "临时加课") {
     s.ap++;
     if (s.plan.enhanced) api.draw(1);
@@ -115,7 +116,16 @@ export function teach(s, c, e, api) {
           .map((i) => s.deck[i])
           .join("、"),
     );
+  if (k === "预")
+    api.log(
+      "下次意图 · " +
+        api
+          .live()
+          .map((x) => api.intent({ ...x, step: x.step + 1 }) || "准备")
+          .join(" / "),
+    );
   if (k === "杂") {
+    s.seq.push({ k, id: e.id });
     if (s.junk[c]) {
       if (c === "杂事甲") {
         api.draw(2);
@@ -143,6 +153,7 @@ export function teach(s, c, e, api) {
     (req === "讲" || (req === "管") === s.plannedAttack)
   ) {
     s.short = true;
+    s.lessons++;
     if (s.debt) s.debt = false;
     else s.grades++;
     api.log("短教案完成");

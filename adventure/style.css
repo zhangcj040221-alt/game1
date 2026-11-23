@@ -1,0 +1,236 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #142a29;
+  color: #f6efd8;
+  font:
+    16px/1.45 system-ui,
+    sans-serif;
+}
+main {
+  max-width: 860px;
+  margin: auto;
+  padding: 10px;
+}
+h1,
+h2,
+h3 {
+  font-family: Georgia, serif;
+  margin: 0.4em 0;
+}
+h1 {
+  font-size: clamp(26px, 5vw, 44px);
+}
+button,
+select,
+input {
+  font: inherit;
+}
+button,
+select,
+input {
+  color: #183530;
+  background: #f4ecd7;
+  border: 1px solid #b4a17d;
+  border-radius: 9px;
+  padding: 9px;
+  min-height: 42px;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.47;
+}
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid #fbbf65;
+}
+.gold,
+.on {
+  background: #f5cb83;
+}
+.row,
+.hand,
+.targets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: 50vh;
+  height: 50dvh;
+  min-height: 190px;
+  max-height: 500px;
+  padding: 16px;
+  border: 1px solid #9b956f;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 76% 19%, #fff0bd 0 4%, transparent 4.4%),
+    linear-gradient(
+      174deg,
+      #708d90,
+      #b5c5ac 47%,
+      #779780 48%,
+      #405f55 68%,
+      #334845 69%
+    );
+  color: #163830;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.scene:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 42% -5% 0;
+  background: #54776b;
+  clip-path: polygon(
+    0 46%,
+    16% 15%,
+    27% 37%,
+    51% 0,
+    75% 57%,
+    94% 14%,
+    100% 39%,
+    100% 100%,
+    0 100%
+  );
+}
+.actors {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.portrait img {
+  width: clamp(80px, 24vw, 160px);
+  height: clamp(85px, 19dvh, 160px);
+  object-fit: contain;
+  display: block;
+}
+.portrait b,
+.enemy {
+  background: #193735;
+  color: #fff4d6;
+  border-radius: 9px;
+  padding: 4px 8px;
+}
+.targets {
+  justify-content: flex-end;
+}
+.enemy {
+  display: grid;
+  text-align: center;
+  font-size: 14px;
+  min-width: 66px;
+}
+.enemy.on {
+  outline: 2px solid #ffdb8e;
+}
+.enemy i {
+  font: normal 34px Georgia;
+  color: #fcdb9e;
+}
+.card {
+  flex: 1 1 105px;
+  min-height: 84px;
+  display: grid;
+  align-content: start;
+  text-align: left;
+  box-shadow: inset 0 0 0 3px #d2b98d;
+}
+.card small,
+small {
+  font-size: 13px;
+}
+.tray,
+details,
+.panel {
+  background: #23403b;
+  border: 1px solid #4e6960;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 7px 0;
+}
+.muted {
+  color: #c2d3c5;
+}
+.hero {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.hero img {
+  width: 82px;
+}
+.intro {
+  margin: 5vh auto;
+  max-width: 610px;
+}
+.controls button {
+  min-height: 38px;
+  padding: 5px 9px;
+}
+label {
+  display: inline-grid;
+  gap: 3px;
+  margin: 5px;
+}
+select {
+  max-width: 100%;
+}
+p {
+  margin: 0.5em 0;
+}
+.hand {
+  align-items: stretch;
+}
+.hero button {
+  flex: 1;
+}
+.chip {
+  color: #ffda99;
+}
+.log {
+  max-height: 180px;
+  overflow: auto;
+}
+.detail {
+  font-size: 14px;
+}
+.row > select {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  .card {
+    flex: 1 1 21%;
+    padding: 8px 6px;
+  }
+  .actors {
+    gap: 4px;
+  }
+  .scene {
+    padding: 10px;
+  }
+  .targets {
+    gap: 4px;
+  }
+  .enemy {
+    padding: 5px;
+  }
+  .tray {
+    padding: 7px;
+  }
+  h2 {
+    font-size: 20px;
+  }
+}

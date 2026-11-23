@@ -2,6 +2,10 @@
 
 第一张交互卡牌效果样片，使用 Three.js 的分层二维场景。角色是用户确认的 R05 矢量基准，按部件加载，实时做轻微呼吸、眨眼和仰望动作测试。当前不是三维角色，也尚未接入原版 GIF 的完整表演动作。
 
+## 卡牌冒险试玩
+
+[三章冒险](https://zhangcj040221-alt.github.io/game1/adventure/) · [老师教案试玩](https://zhangcj040221-alt.github.io/game1/adventure/?lab=teacher) · [厨师成长试玩](https://zhangcj040221-alt.github.io/game1/adventure/?lab=chef)。规则与复验命令见 [冒险说明](adventure/README.md)。
+
 ## 使用
 
 手机或电脑访问仓库的 GitHub Pages 页面。按住卡牌拖动改变角度，松手回正。轻点卡牌或点“许一个愿望”触发流星。四个开关分别控制角色微动、空间视差、粒子、镀闪；暂停控制场景时间。

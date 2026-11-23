@@ -67,6 +67,7 @@ export function cook(s, i, e, api) {
   }
   s.flavors = [...new Set([...s.flavors, t])];
   s.cooked++;
+  s.tasteCounts[c] = (s.tasteCounts[c] || 0) + 1;
   if (t === "酸") {
     life(s, adv ? -3 : -2);
     if (s.hp) {
