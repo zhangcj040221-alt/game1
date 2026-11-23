@@ -234,3 +234,4 @@ p {
     font-size: 20px;
   }
 }
+.recipe-offers{display:grid;gap:8px;margin:10px 0 16px}.recipe-offers .card{min-height:64px;padding:10px 12px;gap:4px}

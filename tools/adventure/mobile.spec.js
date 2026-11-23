@@ -14,8 +14,18 @@ for (const [route, role] of [
     await expect(
       page.getByText("第 1 / 9 次成长", { exact: false }).first(),
     ).toBeVisible();
-    await page.locator("#option").selectOption({ index: 1 });
-    await page.getByText("确认成长").click();
+    if(route==="chef"){
+      const offers=page.locator(".recipe-offers button");
+      await expect(offers).toHaveCount(3);
+      const labels=await offers.allTextContents();
+      await page.reload();await page.getByText("继续上次试玩").click();
+      expect(await offers.allTextContents()).toEqual(labels);
+      await expect(page.locator("select")).toHaveCount(0);
+      await offers.nth(1).click();
+    }else{
+      await page.locator("#option").selectOption({ index: 1 });
+      await page.getByText("确认成长").click();
+    }
     const scene = await page.locator(".scene").boundingBox();
     expect(scene.height).toBeCloseTo(422, 0);
     await page.locator(".card:enabled").first().click();

@@ -294,8 +294,18 @@ export function choices(s) {
   if (s.phase === "next") return [{ label: "进入下一战" }];
   if (s.phase !== "growth") return [];
   if (s.role === "老师") return edits(s.plan);
-  if (s.role === "厨师")
-    return [...kitchenEdits(s.deck), { label: "保留配方" }];
+  if (s.role === "厨师") {
+    const pool = [...new Map(kitchenEdits(s.deck).map(x => [x.label,x])).values()];
+    // A separate seeded stream keeps the offers stable and leaves combat draws untouched.
+    shuffle({seed:(s.initial ^ Math.imul(s.stage+1,2654435761) ^ s.growth)>>>0},pool);
+    const offers=[];
+    for(const kind of ["提炼","转化","做菜"]){
+      const index=pool.findIndex(x=>x.label.startsWith(kind));
+      if(index>=0)offers.push(pool.splice(index,1)[0]);
+    }
+    offers.push(...pool.slice(0,3-offers.length));
+    return [...offers,{label:"保留配方"}];
+  }
   return [
     ...s.deck.flatMap((c, i) =>
       ["突刺", "架势斩", "圆盾", "铁壁", "步法"]

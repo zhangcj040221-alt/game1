@@ -293,13 +293,15 @@ function outcome() {
       btn("返回选角", "home") +
       "</section>"
     );
-  const all = choices(s),
-    groups =
-      s.role === "厨师" && s.phase === "growth"
-        ? ["提炼", "转化", "做菜", "保留"]
-        : s.role === "老师" && s.phase === "growth"
-          ? ["改编", "奖励位", "强化", "保留"]
-          : [];
+  const all=choices(s);
+  if(s.role==="厨师"&&s.phase==="growth"){
+    const cards=all.slice(0,-1);
+    return '<section class="panel"><small>第 '+(s.growth+1)+' / 9 次成长</small><h1>料理研习</h1>'+
+      (cards.length?'<p>选一项替换牌组中的一张牌。</p>':'<p>所有调味料都已做成高级料理。</p>')+
+      '<div class="recipe-offers">'+cards.map((x,i)=>btn('<strong>'+x.label+'</strong><small>'+recipes[x.v]+'</small>',"next",i,"card")).join('')+
+      '</div>'+btn("保留现有配方，进入下一战","next",cards.length)+'</section>';
+  }
+  const groups=s.role==="老师"&&s.phase==="growth"?["改编","奖励位","强化","保留"]:[];
   if (groups.length && !groups.includes(filter))
     filter = groups.find((g) => all.some((x) => x.label.startsWith(g)));
   const list = all

@@ -229,3 +229,18 @@ test("首领连击逐段抵甲，完美格挡取消后续一次意图", () => {
   end(s);
   assert.equal(s.hp, 27);
 });
+test('厨师成长只提供至多三个可执行且不同的具体替换',()=>{
+ const samples=new Set();
+ for(let seed=1;seed<=12;seed++){
+  const s=start("厨师",seed);s.phase="growth";const all=choices(s),offers=all.slice(0,-1);
+  assert.deepEqual(choices(structuredClone(s)),all);
+  assert.equal(new Set(offers.map(x=>x.label.slice(0,2))).size,3);
+  samples.add(offers.map(x=>x.label).join("/"));
+  assert.equal(advance(s,4),false);
+  const x=offers[1];advance(s,1);assert.equal(s.deck[x.i],x.v);assert.equal(s.deck.length,8);
+ }
+ assert.ok(samples.size>1);
+ const s=start("厨师");s.phase="growth";s.deck=Array(8).fill("酸");
+ const offers=choices(s).slice(0,-1);assert.equal(new Set(offers.map(x=>x.label)).size,3);
+ s.deck.fill("蜜桃羹");assert.equal(choices(s).length,1);assert.ok(advance(s,0));
+});
