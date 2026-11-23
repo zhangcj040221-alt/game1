@@ -360,3 +360,35 @@ test("一二魔法失衡首领需一次正常意图恢复，骑士完美格挡�
   assert.equal(knight.enemies[0].stun, false);
   assert.equal(knight.hp, 30);
 });
+
+
+test("工程师精修可累积两级，真实机关增伤，替换清零且跨战保留", () => {
+  let s = start("工程师", 5);
+  s.phase = "growth";
+  let all = choices(s);
+  const i = all.findIndex((x) => x.key === "quality");
+  assert.ok(i >= 0);
+  const slot = all[i].i;
+  const kind = s.deck[slot];
+  assert.ok(advance(s, i));
+  assert.equal(s.machineQuality[slot], 1);
+  hand(s, s.deck);
+  s.enemies[0].hp = 80;
+  s.enemies[0].max = 80;
+  assert.ok(play(s, slot));
+  assert.equal(s.enemies[0].deviceBoost, 2);
+  assert.ok(ability(s, "手动启动"));
+  assert.equal(s.enemies[0].hp, 80 - {绊索:5,钻地鼠:8,捕兽夹:8,拆甲钻:6,弹簧盾:3,发条蜂:5}[kind] - 2);
+  assert.equal(s.enemies[0].deviceBoost, 0);
+  s.phase = "growth";
+  let up = choices(s).findIndex((x) => x.key === "quality" && x.i === slot);
+  assert.ok(advance(s, up));
+  assert.equal(s.machineQuality[slot], 2);
+  s.phase = "growth";
+  assert.ok(!choices(s).some((x) => x.key === "quality" && x.i === slot));
+  const rep = choices(s).findIndex((x) => x.i === slot && x.v);
+  if (rep >= 0) {
+    assert.ok(advance(s, rep));
+    assert.equal(s.machineQuality[slot], 0);
+  }
+});

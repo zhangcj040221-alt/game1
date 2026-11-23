@@ -179,6 +179,7 @@ export function start(role = "布布", seed = 20261123, options = {}) {
     gold: 5,
     pocket: [],
     sold: [],
+    machineQuality: Array(8).fill(0),
     seed,
     stage: 0,
     hp: 30,
@@ -222,6 +223,7 @@ function enter(s) {
       stun: false,
       // 一二对首领的魔法失衡有恢复窗口，其他职业仍照常结算。
       mageBreakReady: true,
+      deviceBoost: 0,
       buff: 0,
     })),
     progress: 0,
@@ -334,18 +336,19 @@ export function choices(s) {
   if (s.phase !== "growth") return [];
   if (s.role === "工程师") {
     const pool = [];
-    for (const c of new Set(s.deck.filter((k) => machines[k])))
-      for (const v of Object.keys(machines)) {
-        if (c !== v && !s.deck.includes(v))
-          pool.push({ i: s.deck.indexOf(c), v, label: c + " → " + v });
-      }
-    return [
-      ...shuffle(
-        { seed: (s.initial ^ Math.imul(s.stage + 1, 2654435761)) >>> 0 },
-        pool,
-      ).slice(0, 3),
-      { label: "保留图纸" },
-    ];
+    for (const [i, c] of s.deck.entries())
+      if (machines[c])
+        for (const v of Object.keys(machines))
+          if (c !== v && !s.deck.includes(v))
+            pool.push({ i, v, label: c + " → " + v });
+    const seed = (s.initial ^ Math.imul(s.stage + 1, 2654435761)) >>> 0;
+    const options = shuffle({ seed }, pool).slice(0, 2);
+    const quality = s.machineQuality || Array(s.deck.length).fill(0);
+    const improvements = s.deck.flatMap((c, i) => machines[c] && (quality[i] || 0) < 2
+      ? [{ key: "quality", i, label: "精修 · " + c + " 机关伤害+2（" + ((quality[i] || 0) + 1) + "/2）" }]
+      : []);
+    // 少量随机更换图纸 + 可定向精修已有图纸；最多两级，更换该槽精修归零。
+    return [...options, ...improvements, { label: "保留图纸" }];
   }
   if (s.role === "老师") return edits(s.plan);
   if (s.role === "厨师") {
@@ -393,7 +396,11 @@ export function advance(s, i) {
   if (s.phase === "growth") {
     s.growth++;
     if (s.role === "老师") edit(s.plan, x);
-    else if (x.v) s.deck[x.i] = x.v;
+    else if (s.role === "工程师" && x.key === "quality") s.machineQuality[x.i]++;
+    else if (x.v) {
+      s.deck[x.i] = x.v;
+      if (s.role === "工程师") s.machineQuality[x.i] = 0;
+    }
   }
   s.stage++;
   enter(s);
@@ -413,10 +420,11 @@ export function playable(s, i) {
     Boolean((s.junk[c] === 2 || c === "预习") && !s.freeJunk)
   );
 }
-function ordinary(s, c, e) {
+function ordinary(s, c, e, i) {
   if (machines[c]) {
     e.device = c;
-    log(s, "已布置" + c);
+    e.deviceBoost = (s.machineQuality?.[i] || 0) * 2;
+    log(s, "已布置" + c + (e.deviceBoost ? " · 精修+" + e.deviceBoost : ""));
     return;
   }
   if (c === "探囊") log(s, "探囊 · 金币 +" + steal(s, e, 1));
@@ -512,8 +520,8 @@ export function play(s, i) {
   else if (!cook(s, i, e, api(s))) {
     const echo = s.echo && c !== "回声";
     if (echo) s.echo = false;
-    ordinary(s, c, e);
-    if (echo) ordinary(s, c, e);
+    ordinary(s, c, e, i);
+    if (echo) ordinary(s, c, e, i);
     if (s.role === "一二" && !mage.includes(c)) s.spellUses++;
   }
   if (!s.fresh.includes(i)) s.bin.push(i);

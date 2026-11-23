@@ -33,13 +33,15 @@ export function trigger(s, e, api) {
   const name = e.device,
     m = machines[name];
   if (!m) return;
+  const boost = e.deviceBoost || 0;
   e.device = null;
-  api.log(name + "触发 · " + m.desc);
+  e.deviceBoost = 0;
+  api.log(name + "触发 · " + m.desc + (boost ? " · 精修伤害+" + boost : ""));
   if (name === "绊索") e.reduce += 3;
   if (name === "弹簧盾") s.armor += 5;
   if (name === "拆甲钻") e.armor = 0;
   for (const target of name === "发条蜂" ? api.live() : [e])
-    api.hit(target, m.n);
+    api.hit(target, m.n + boost);
 }
 export function steal(s, e, n) {
   const take = Math.min(e.coins, n);

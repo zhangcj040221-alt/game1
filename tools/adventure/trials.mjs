@@ -17,7 +17,8 @@ import { writeFileSync } from "node:fs";
 import { goods, machines } from "../../adventure/workshop.js";
 const routes = {
   采购: ["小偷"],
-  机关: ["工程师", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
+  机关: ["工程师", "精修", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
+  机关纯替换: ["工程师", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
   纪律: [
     "老师",
     "整顿课堂",
@@ -31,12 +32,14 @@ const routes = {
   教材: [
     "老师",
     "指定教材",
-    "预读",
+    "衔接",
     "预讲攻",
-    "成果",
+    "预读",
+    "强化 · 衔接",
     "强化 · 指定教材",
-    "强化 · 成果",
+    "成果",
   ],
+  教材无衔接: ["老师", "指定教材", "预读", "预讲攻", "成果", "强化 · 指定教材", "强化 · 成果"],
   酸辣甜: [
     "厨师",
     "青梅脆藕",
@@ -62,7 +65,7 @@ function reward(s, path) {
     const want = path[1 + ((s.growth + offset) % (path.length - 1))];
     const candidates = all
       .map((x, i) => ({ x, i }))
-      .filter(({ x }) => x.value === want || x.v === want || x.label === want);
+      .filter(({ x }) => x.value === want || x.v === want || x.label === want || x.label.startsWith(want + " ·"));
     candidates.sort((a, b) => priority(b.x) - priority(a.x));
     function priority(x) {
       if (x.key === "reward") return s.plan.reward[x.slot] ? 0 : 5;

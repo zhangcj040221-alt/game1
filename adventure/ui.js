@@ -194,7 +194,7 @@ function scene() {
             "　甲" +
             e.armor +
             (s.role === "小偷" ? " · 币" + e.coins : "") +
-            (e.device ? " · " + e.device : "") +
+            (e.device ? " · " + e.device + (e.deviceBoost ? " 精修+" + e.deviceBoost : "") : "") +
             "</small><small>" +
             (e.stun
               ? "失衡 · 跳过"
@@ -386,7 +386,7 @@ function outcome() {
   }
   if (s.phase === "growth" && s.role === "工程师") {
     return (
-      '<section class="panel"><h1>改装图纸</h1><p>选择一项替换牌组中的一张机关图纸。</p><div class="recipe-offers">' +
+      '<section class="panel"><h1>改装工坊</h1><p>更换机关，或精修指定图纸（每张最多2级、每级机关伤害+2；更换该槽清除精修）。</p><div class="recipe-offers">' +
       choices(s)
         .map((x, i) =>
           btn(
