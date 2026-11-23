@@ -109,17 +109,21 @@ test("咸不递归，返回实体，下回合仍花行动", () => {
   assert.equal(s.ap, 1);
   assert.equal(s.fresh.length, 0);
 });
-test("苦屏蔽甜酸生命效果，酸攻击减半，调和只一次", () => {
+test("苦屏蔽甜酸生命效果，后续酸追击减半，调和只一次", () => {
   let s = pair("厨师");
-  hand(s, ["苦", "酸", "甜"]);
+  hand(s, ["苦", "酸", "甜", "切片"]);
+  s.enemies[0].hp = 30;
+  s.enemies[0].max = 30;
   s.hp = 20;
   play(s, 0);
   play(s, 1);
-  assert.equal(s.enemies[0].hp, 8);
+  assert.equal(s.enemies[0].hp, 30);
   ability(s, "调和");
   play(s, 2);
   assert.equal(s.hp, 20);
   assert.equal(s.ap, 1);
+  play(s, 3);
+  assert.equal(s.enemies[0].hp, 23);
   assert.equal(ability(s, "调和"), false);
 });
 test("提炼转化做菜替换同一位置，全部五道均可达", () => {
