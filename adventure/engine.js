@@ -220,6 +220,8 @@ function enter(s) {
           : 0,
       reduce: 0,
       stun: false,
+      // 一二对首领的魔法失衡有恢复窗口，其他职业仍照常结算。
+      mageBreakReady: true,
       buff: 0,
     })),
     progress: 0,
@@ -249,6 +251,8 @@ function enter(s) {
     perfect: 0,
     spicy: 0,
     spicyTurns: 0,
+    acidRatio: 0,
+    acidPlus: 0,
     bitter: 0,
     salt: 0,
     fresh: [],
@@ -459,17 +463,27 @@ function ordinary(s, c, e) {
   if (c === "连斩") n = 3;
   if (n) {
     const opened = e.stun;
-    for (let j = 0; j < (["连斩", "双星"].includes(c) ? 2 : 1); j++)
-      hit(s, e, n + Math.floor(s.spicy * (s.bitter ? 0.5 : 1)));
+    const attack = n + Math.floor(s.spicy * (s.bitter ? 0.5 : 1));
+    for (let j = 0; j < (["连斩", "双星"].includes(c) ? 2 : 1); j++) hit(s, e, attack);
+    if (s.role === "厨师" && s.acidRatio) {
+      const extra = Math.ceil((attack * s.acidRatio + s.acidPlus) * (s.bitter ? 0.5 : 1));
+      if (extra > 0) hit(s, e, extra);
+      s.acidRatio = 0;
+      s.acidPlus = 0;
+    }
     if (
       e.hp &&
       s.role === "一二" &&
       ((s.mirror && c === "星弹") || (e.mark && c !== "星印"))
     ) {
-      e.stun = true;
+      // 只限制一二的魔法连锁，不改变骑士拼招与老师主导课堂。
+      if (e.kind !== "boss" || e.mageBreakReady) {
+        e.stun = true;
+        if (e.kind === "boss") e.mageBreakReady = false;
+        log(s, "魔法连锁 · 失衡");
+      } else log(s, "首领仍在魔法韧性窗口，未再次失衡");
       e.mark = false;
       s.mirror = false;
-      log(s, "魔法连锁 · 失衡");
     }
     if (opened && c === "星弹") hit(s, e, 3);
   }
@@ -661,6 +675,7 @@ export function end(s) {
   }
   for (const e of alive(s)) {
     if (!e.hp) continue;
+    const wasStunned = e.stun;
     const d = intent(s, e);
     if (!e.stun && e.device && machines[e.device].attack === Boolean(d)) {
       trigger(s, e, api(s));
@@ -683,7 +698,10 @@ export function end(s) {
         log(s, foes[e.kind] + "攻击 " + n + " · 受到 " + lost + " 伤害");
         if (!lost && s.mirror) {
           s.mirror = false;
-          e.stun = true;
+          if (e.kind !== "boss" || e.mageBreakReady) {
+            e.stun = true;
+            if (e.kind === "boss") e.mageBreakReady = false;
+          }
           hit(s, e, 3);
         }
       }
@@ -692,6 +710,8 @@ export function end(s) {
       const target = alive(s).find((x) => x !== e) || e;
       target.armor = chapter(s) + 1;
     }
+    // 首领完整执行过一次意图后，魔法连锁才可重新使其失衡。
+    if (e.kind === "boss" && !wasStunned && !e.stun) e.mageBreakReady = true;
     e.step++;
     e.reduce = 0;
     if (!s.hp) break;

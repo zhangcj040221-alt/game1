@@ -312,3 +312,51 @@ test("口袋物品按实例扣次数，最后一次退场，偷空无收益", as
   assert.equal(s.gold, gold + 1);
   assert.equal(ability(s, "顺手牵羊"), false);
 });
+
+
+test("酸味先自损、后续普通攻击才追击；成长不会删光普通攻击", () => {
+  const s = start("厨师", 1);
+  s.enemies[0].hp = 40;
+  s.enemies[0].max = 40;
+  hand(s, ["酸", "切片", "翻锅"]);
+  assert.ok(play(s, 0));
+  assert.equal(s.hp, 28);
+  assert.equal(s.enemies[0].hp, 40);
+  assert.ok(play(s, 1));
+  assert.equal(s.enemies[0].hp, 32);
+  assert.equal(s.acidRatio, 0);
+  let deck = ["酸", "辣", "甜", "切片", "切片", "翻锅", "翻锅", "备料"];
+  deck[3] = "苦";
+  deck[4] = "咸";
+  assert.ok(kitchenEdits(deck).some((x) => x.label.includes("备料")));
+  assert.ok(!kitchenEdits(deck).some((x) => x.label.includes("切片") || x.label.includes("翻锅")));
+});
+
+test("一二魔法失衡首领需一次正常意图恢复，骑士完美格挡仍打断下次", () => {
+  const mage = start("一二", 1);
+  mage.stage = 11;
+  mage.phase = "next";
+  advance(mage, 0);
+  hand(mage, ["镜", "星弹", "镜", "星弹"]);
+  mage.enemies[0].hp = 90;
+  play(mage, 0);
+  play(mage, 1);
+  assert.equal(mage.enemies[0].stun, true);
+  assert.equal(mage.enemies[0].mageBreakReady, false);
+  end(mage);
+  assert.equal(mage.enemies[0].stun, false);
+  hand(mage, ["镜", "星弹"]);
+  play(mage, 0);
+  play(mage, 1);
+  assert.equal(mage.enemies[0].stun, false);
+  end(mage);
+  assert.equal(mage.enemies[0].mageBreakReady, true);
+  const knight = start("骑士", 1);
+  knight.armor = 4;
+  end(knight);
+  assert.equal(knight.perfect, 1);
+  assert.equal(knight.enemies[0].stun, true);
+  end(knight);
+  assert.equal(knight.enemies[0].stun, false);
+  assert.equal(knight.hp, 30);
+});

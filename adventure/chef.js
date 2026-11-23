@@ -15,20 +15,23 @@ export function flavor(c) {
   return i >= 0 ? tastes[i] : tastes[dishes.indexOf(c)];
 }
 export const recipes = {
-  酸: "失去2生命，造成两段3点料理伤害",
+  酸: "失去2生命，使下一次普通攻击追加50%伤害",
   辣: "当前及下一回合攻击+2，每个生效回合失去1生命",
   甜: "恢复4生命，每战治疗总额有限",
   咸: "下一张其他味道正向效果+1，下回合返回手牌",
   苦: "本回合屏蔽料理自损与治疗，料理输出减半，结束回甘1",
-  青梅脆藕: "失去3生命，两段5伤，抽1",
+  青梅脆藕: "失去3生命，使下一次普通攻击追加等额伤害，抽1",
   烈焰椒锅: "三回合攻击+4，每回合失去2生命",
   蜜桃羹: "恢复7生命",
   盐焗卷: "下一张其他味道正向效果+3，下回合返回手牌",
   苦瓜清汤: "压制两回合，结束回甘2",
 };
 export function kitchenEdits(deck) {
+  const basicAttacks = deck.filter((c) => ["切片", "翻锅"].includes(c)).length;
   return deck.flatMap((c, i) => {
     if (dishes.includes(c)) return [];
+    // 酸味要靠普通攻击兑现：至少保留两张基础攻击，防止成长把发动器全替掉。
+    if (basicAttacks <= 2 && ["切片", "翻锅"].includes(c)) return [];
     const source = tastes.includes(c),
       options = tastes
         .filter((t) => t !== c)
@@ -69,13 +72,11 @@ export function cook(s, i, e, api) {
   s.cooked++;
   s.tasteCounts[c] = (s.tasteCounts[c] || 0) + 1;
   if (t === "酸") {
+    // 先付自损，下一张普通攻击才兑现追击；重复上酸不叠倍数。
     life(s, adv ? -3 : -2);
     if (s.hp) {
-      const n = Math.floor(
-        ((adv ? 5 : 3) + bonus + s.spicy) * (s.bitter ? 0.5 : 1),
-      );
-      api.hit(e, n);
-      api.hit(e, n);
+      s.acidRatio = Math.max(s.acidRatio || 0, adv ? 1 : 0.5);
+      s.acidPlus = Math.max(s.acidPlus || 0, bonus);
       if (adv) api.draw(1);
     }
   }
