@@ -50,7 +50,7 @@ export const map = [
   ["boss", 62],
   ["pressure charger", 24, 24],
   ["spore pressure", 24, 26],
-  ["shell charger", 30, 38],
+  ["shell charger", 28, 34],
   ["boss", 90],
 ];
 const knight = ["斩击", "斩击", "连斩", "反击", "木盾", "塔盾", "校盾", "步法"];
