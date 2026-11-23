@@ -15,12 +15,12 @@ export function flavor(c) {
   return i >= 0 ? tastes[i] : tastes[dishes.indexOf(c)];
 }
 export const recipes = {
-  酸: "失去2生命，使下一次普通攻击追加50%伤害",
+  酸: "失去2生命，使下一次普通攻击追加等额伤害",
   辣: "当前及下一回合攻击+2，每个生效回合失去1生命",
   甜: "恢复4生命，每战治疗总额有限",
   咸: "下一张其他味道正向效果+1，下回合返回手牌",
   苦: "本回合屏蔽料理自损与治疗，料理输出减半，结束回甘1",
-  青梅脆藕: "失去3生命，使下一次普通攻击追加等额伤害，抽1",
+  青梅脆藕: "失去3生命，使下一次普通攻击额外造成200%伤害，抽1",
   烈焰椒锅: "三回合攻击+4，每回合失去2生命",
   蜜桃羹: "恢复7生命",
   盐焗卷: "下一张其他味道正向效果+3，下回合返回手牌",
@@ -75,7 +75,7 @@ export function cook(s, i, e, api) {
     // 先付自损，下一张普通攻击才兑现追击；重复上酸不叠倍数。
     life(s, adv ? -3 : -2);
     if (s.hp) {
-      s.acidRatio = Math.max(s.acidRatio || 0, adv ? 1 : 0.5);
+      s.acidRatio = Math.max(s.acidRatio || 0, adv ? 2 : 1);
       s.acidPlus = Math.max(s.acidPlus || 0, bonus);
       if (adv) api.draw(1);
     }

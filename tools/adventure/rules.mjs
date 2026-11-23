@@ -123,7 +123,7 @@ test("苦屏蔽甜酸生命效果，后续酸追击减半，调和只一次", ()
   assert.equal(s.hp, 20);
   assert.equal(s.ap, 1);
   play(s, 3);
-  assert.equal(s.enemies[0].hp, 23);
+  assert.equal(s.enemies[0].hp, 22);
   assert.equal(ability(s, "调和"), false);
 });
 test("提炼转化做菜替换同一位置，全部五道均可达", () => {
@@ -327,7 +327,7 @@ test("酸味先自损、后续普通攻击才追击；成长不会删光普通�
   assert.equal(s.hp, 28);
   assert.equal(s.enemies[0].hp, 40);
   assert.ok(play(s, 1));
-  assert.equal(s.enemies[0].hp, 32);
+  assert.equal(s.enemies[0].hp, 30);
   assert.equal(s.acidRatio, 0);
   let deck = ["酸", "辣", "甜", "切片", "切片", "翻锅", "翻锅", "备料"];
   deck[3] = "苦";
