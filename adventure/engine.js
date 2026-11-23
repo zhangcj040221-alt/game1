@@ -72,11 +72,16 @@ function shuffle(s, a) {
   }
   return a;
 }
+function refill(s) {
+  if (!s.pile.length) s.pile = shuffle(s, s.bin.splice(0));
+}
 function draw(s, n) {
   while (n--) {
-    if (!s.pile.length) s.pile = shuffle(s, s.bin.splice(0));
+    refill(s);
     if (!s.pile.length) break;
-    s.hand.push(s.pile.pop());
+    const card = s.pile.pop();
+    s.hand.push(card);
+    if (s.revealed) s.revealed = s.revealed.filter((i) => i !== card);
   }
 }
 function log(s, msg) {
@@ -141,6 +146,10 @@ const api = (s) => ({
   hit: (e, n, p) => hit(s, e, n, p),
   intent: (e) => intent(s, e),
   draw: (n) => draw(s, n),
+  reveal: (n) => {
+    refill(s);
+    s.revealed = s.pile.slice(-n).reverse();
+  },
   log: (m) => log(s, m),
 });
 export function start(role = "布布", seed = 20261123, options = {}) {
@@ -195,6 +204,9 @@ function enter(s) {
     grades: 0,
     junk: { 杂事甲: 0, 杂事乙: 0 },
     seq: [],
+    revealed: [],
+    canTake: false,
+    foresight: false,
     lecture: 0,
     short: false,
     accelerated: false,
@@ -320,7 +332,7 @@ export function playable(s, i) {
   return (
     s.ap > 0 ||
     Boolean(s.freeTaste && flavor(c) && !s.returned.includes(i)) ||
-    Boolean(s.junk[c] === 2 && !s.freeJunk)
+    Boolean((s.junk[c] === 2 || c === "预习") && !s.freeJunk)
   );
 }
 function ordinary(s, c, e) {
@@ -385,7 +397,7 @@ export function play(s, i) {
     e = s.enemies[s.target];
   s.plays++;
   if (s.freeTaste && flavor(c) && !s.returned.includes(i)) s.freeTaste = false;
-  else if (s.junk[c] === 2 && !s.freeJunk) s.freeJunk = true;
+  else if ((s.junk[c] === 2 || c === "预习") && !s.freeJunk) s.freeJunk = true;
   else s.ap--;
   if (
     s.active &&
@@ -416,6 +428,9 @@ export function buttons(s) {
   const e = s.enemies[s.target];
   if (s.role === "老师")
     return [
+      ...(s.canTake
+        ? (s.revealed || []).map((i) => "取入手牌 · " + s.deck[i])
+        : []),
       ...(!s.seq.length && !s.short ? ["备课指定目标"] : []),
       ...(s.grades
         ? ["投入长期", "改造杂事甲", "改造杂事乙"].filter((x, i) =>
@@ -444,7 +459,13 @@ export function ability(s, k) {
   if (!buttons(s).includes(k)) return false;
   const e = s.enemies[s.target];
   log(s, k);
-  if (k === "备课指定目标") {
+  if (k.startsWith("取入手牌 · ")) {
+    const i = s.revealed.find((i) => k === "取入手牌 · " + s.deck[i]);
+    s.pile.splice(s.pile.indexOf(i), 1);
+    s.hand.push(i);
+    s.revealed = s.revealed.filter((x) => x !== i);
+    s.canTake = false;
+  } else if (k === "备课指定目标") {
     s.planned = e.id;
     s.plannedAttack = intent(s, e) > 0;
   } else if (k === "投入长期") {
@@ -578,6 +599,9 @@ export function end(s) {
     fourthUsed: false,
     armor: 0,
     seq: [],
+    revealed: [],
+    canTake: false,
+    foresight: false,
     lecture: 0,
     short: false,
     accelerated: false,

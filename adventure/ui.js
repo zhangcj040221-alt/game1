@@ -31,11 +31,11 @@ try {
 } catch {}
 const descriptions = {
   提问: "攻击6",
-  小测: "攻击4",
-  板书: "下一次攻击+2",
-  点名: "目标减伤3",
-  纪律: "目标减伤2",
-  预习: "查看牌顶2张",
+  小测: "攻击4；目标已被削弱时攻击7",
+  板书: "本回合下一次攻击+4",
+  点名: "目标此次攻击减4",
+  纪律: "全体敌人此次攻击各减2",
+  预习: "看牌顶2张，选1入手。与二级杂事共享每回合一次免费",
   杂事甲: "查看牌顶；改造后抽2弃1",
   杂事乙: "查看牌顶；改造后抽1，下回合多抽1",
   轻击: "攻击5",
@@ -202,7 +202,26 @@ function fight() {
     list = s.book ? s.bin : s.hand;
   return (
     scene() +
-    (s.role === "老师" ? school() : "") +
+    (s.role === "老师"
+      ? (s.foresight || s.revealed?.length
+          ? '<section class="tray" aria-live="polite"><b>已知牌顶</b>　' +
+            (s.revealed.map((i) => s.deck[i]).join(" → ") || "已抽完") +
+            (s.canTake && s.revealed.length ? " · 在下方选一张入手" : "") +
+            (s.foresight
+              ? "<br>下一次意图　" +
+                alive(s)
+                  .map(
+                    (e) =>
+                      foes[e.kind] +
+                      " · " +
+                      (intent(s, { ...e, buff: 0, step: e.step + 1 }) ||
+                        "准备"),
+                  )
+                  .join(" / ")
+              : "") +
+            "</section>"
+          : "") + school()
+      : "") +
     '<div class="tray controls"><div class="row"><b>行动 ' +
     s.ap +
     "</b> " +

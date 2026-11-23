@@ -60,3 +60,21 @@ test("共享规则回归", async () => {
   const { execFileSync } = await import("node:child_process");
   execFileSync(process.execPath, ["--test", "tools/adventure/rules.mjs"]);
 });
+test("预习可直接看牌、选牌，刷新保留剩余牌顶", async ({ page }) => {
+  await page.goto("/adventure/?lab=teacher&seed=5");
+  await page.getByRole("button", { name: "老师 · 成长试玩" }).click();
+  const count = await page.locator(".card").count();
+  await page.locator(".card").filter({ hasText: "预习" }).click();
+  await expect(page.getByText("已知牌顶", { exact: true })).toBeVisible();
+  await expect(page.locator(".controls")).toContainText("行动 3");
+  const picks = page.getByRole("button", { name: /^取入手牌/ });
+  await expect(picks).toHaveCount(2);
+  const label = (await picks.last().innerText()).split(" · ")[1];
+  await picks.last().click();
+  await expect(page.locator(".card")).toHaveCount(count);
+  await expect(page.locator(".card").last()).toContainText(label);
+  await expect(picks).toHaveCount(0);
+  await page.reload();
+  await page.getByText("继续上次试玩").click();
+  await expect(page.getByText("已知牌顶", { exact: true })).toBeVisible();
+});

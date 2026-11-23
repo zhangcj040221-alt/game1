@@ -102,28 +102,19 @@ export function teach(s, c, e, api) {
   const k = categories[schoolDeck.indexOf(c)],
     t = s.plan;
   if (k === "攻") {
-    api.hit(e, (c === "提问" ? 6 : 4) + s.lecture);
+    api.hit(e, (c === "提问" ? 6 : e.reduce > 0 ? 7 : 4) + s.lecture);
     s.lecture = 0;
   }
-  if (k === "管") e.reduce += c === "点名" ? 3 : 2;
-  if (k === "讲") s.lecture += 2;
-  if (k === "预" || k === "杂")
-    api.log(
-      "牌顶 · " +
-        s.pile
-          .slice(-2)
-          .reverse()
-          .map((i) => s.deck[i])
-          .join("、"),
-    );
-  if (k === "预")
-    api.log(
-      "下次意图 · " +
-        api
-          .live()
-          .map((x) => api.intent({ ...x, step: x.step + 1 }) || "准备")
-          .join(" / "),
-    );
+  if (c === "点名") e.reduce += 4;
+  if (c === "纪律") for (const foe of api.live()) foe.reduce += 2;
+  if (k === "讲") s.lecture += 4;
+  if (k === "预" || k === "杂") {
+    if (k === "预") {
+      api.reveal(2);
+      s.canTake = true;
+      s.foresight = true;
+    } else if (!s.canTake) api.reveal(1);
+  }
   if (k === "杂") {
     s.seq.push({ k, id: e.id });
     if (s.junk[c]) {
