@@ -15,6 +15,7 @@ import {
 } from "../../adventure/engine.js";
 import { writeFileSync } from "node:fs";
 import { goods, machines } from "../../adventure/workshop.js";
+import { flavor, dishes } from "../../adventure/chef.js";
 const routes = {
   采购: ["小偷"],
   机关: ["工程师", "精修", "弹簧盾", "发条蜂", "捕兽夹", "拆甲钻"],
@@ -61,6 +62,25 @@ function reward(s, path) {
   const all = choices(s);
   if (s.phase === "job") return all.findIndex((x) => x.label === path[0]);
   if (s.phase !== "growth") return 0;
+  if (s.role === "厨师") {
+    const mode = path[1] === "苦" ? "苦" : path[1] === "咸" ? "咸" : "甜";
+    const desired = mode === "苦" ? ["酸", "辣", "苦"] : mode === "咸" ? ["咸", "酸", "甜", "辣"] : ["酸", "辣", "甜", "咸"];
+    const count = (t) => s.deck.filter((c) => flavor(c) === t).length;
+    const upgraded = (t) => s.deck.some((c) => dishes.includes(c) && flavor(c) === t);
+    const attacks = s.deck.filter((c) => ["切片", "翻锅"].includes(c)).length;
+    const ranked = all.map((x, i) => {
+      if (!x.v) return { i, value: 0 };
+      const from = s.deck[x.i], target = flavor(x.v);
+      if (!desired.includes(target)) return { i, value: -10 };
+      let value = dishes.includes(x.v) ? (upgraded(target) ? -8 : 18) : (count(target) ? -6 : 12);
+      if (mode === "苦" && target === "苦") value += 5;
+      if (mode === "咸" && target === "咸") value += 5;
+      if (target === "酸" && count(target) >= 2 && !dishes.includes(x.v)) value -= 15;
+      if (["切片", "翻锅"].includes(from)) value -= attacks <= 3 ? 30 : 8;
+      return { i, value };
+    }).sort((a, b) => b.value - a.value || a.i - b.i);
+    return ranked[0].value > 0 ? ranked[0].i : all.length - 1;
+  }
   for (let offset = 0; offset < path.length - 1; offset++) {
     const want = path[1 + ((s.growth + offset) % (path.length - 1))];
     const candidates = all
@@ -90,6 +110,7 @@ function score(s) {
     (s.short ? 4 : 0) +
     (s.active ? 20 : 0) +
     s.spicy * 1.3 +
+    Math.min(8, (s.acidRatio || 0) * 4) +
     s.echo * 1.3 +
     s.mirror * 1.5 +
     s.salt * 0.6 +
@@ -98,7 +119,7 @@ function score(s) {
       (n, e) =>
         n +
         (e.device
-          ? machines[e.device].n *
+          ? (machines[e.device].n + (e.deviceBoost || 0)) *
             (machines[e.device].attack === Boolean(intent(s, e)) ? 0.85 : 0.35)
           : 0),
       0,
